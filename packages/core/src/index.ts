@@ -93,6 +93,9 @@ export * from './tools/web-search.js';
 export * from './tools/read-many-files.js';
 export * from './tools/mcp-client.js';
 export * from './tools/mcp-tool.js';
+export { readTodosForSession, type TodoItem } from './tools/todoWrite.js';
+export { ContextState } from './subagents/subagent.js';
+
 
 // MCP OAuth
 export { MCPOAuthProvider } from './mcp/oauth-provider.js';

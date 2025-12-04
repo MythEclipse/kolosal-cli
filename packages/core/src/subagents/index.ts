@@ -47,8 +47,10 @@ export type {
   ModelConfig,
   RunConfig,
   ToolConfig,
-  SubagentTerminateMode,
 } from './types.js';
+
+// Export SubagentTerminateMode as a value (enum)
+export { SubagentTerminateMode } from './types.js';
 
 export { SubAgentScope } from './subagent.js';
 

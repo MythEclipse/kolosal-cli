@@ -46,6 +46,7 @@ import { TaskTool } from '../tools/task.js';
 import { TodoWriteTool } from '../tools/todoWrite.js';
 import { ToolRegistry } from '../tools/tool-registry.js';
 import type { AnyToolInvocation } from '../tools/tools.js';
+import { VerifyTaskTool } from '../tools/verifyTask.js';
 import { WebFetchTool } from '../tools/web-fetch.js';
 import { WebSearchTool } from '../tools/web-search.js';
 import { WriteFileTool } from '../tools/write-file.js';
@@ -1081,6 +1082,7 @@ export class Config {
     registerCoreTool(ShellTool, this);
     registerCoreTool(MemoryTool);
     registerCoreTool(TodoWriteTool, this);
+    registerCoreTool(VerifyTaskTool, this);
     registerCoreTool(ExitPlanModeTool, this);
     registerCoreTool(WebFetchTool, this);
     // Conditionally register web search tool only if Tavily API key is set

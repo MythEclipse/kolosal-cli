@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config, ToolCallRequestInfo } from '@kolosal-ai/kolosal-ai-core';
 import {
   executeToolCall,
   shutdownTelemetry,
@@ -13,6 +12,12 @@ import {
   parseAndFormatApiError,
   FatalInputError,
   FatalTurnLimitedError,
+  readTodosForSession,
+  ContextState,
+  SubagentTerminateMode,
+  type Config,
+  type ToolCallRequestInfo,
+  type TodoItem,
 } from '@kolosal-ai/kolosal-ai-core';
 import type { Content, Part } from '@google/genai';
 
@@ -41,10 +46,63 @@ export async function runNonInteractive(
 
     const geminiClient = config.getGeminiClient();
 
+    // --- PLANNER INTEGRATION START ---
+    // Check if we already have a plan (todos) for this session
+    const sessionId = config.getSessionId();
+    let currentTodos = await readTodosForSession(sessionId);
+    let planContextString = '';
+
+    // If no plan exists, try to run the planner agent
+    if (currentTodos.length === 0) {
+      const subagentManager = config.getSubagentManager();
+      const plannerConfig = await subagentManager.loadSubagent('planner');
+
+      if (plannerConfig) {
+        if (config.getDebugMode()) {
+          console.log('No existing plan found. engaging Planner Agent...');
+        }
+        
+        // Create context for planner
+        const plannerContext = new ContextState();
+        plannerContext.set('task_prompt', input);
+
+        // Create scope
+        const plannerScope = await subagentManager.createSubagentScope(
+          plannerConfig,
+          config
+        );
+
+        // Run planner
+        // We use a separate abort controller for the planner to isolate it
+        const plannerAbortController = new AbortController();
+        await plannerScope.runNonInteractive(plannerContext, plannerAbortController.signal);
+
+        // Check if plan was created
+        if (plannerScope.getTerminateMode() === SubagentTerminateMode.GOAL) {
+           currentTodos = await readTodosForSession(sessionId);
+           if (currentTodos.length > 0) {
+             if (config.getDebugMode()) {
+               console.log('Plan created successfully.');
+             }
+           }
+        }
+      }
+    }
+
+    // If we have a plan (either pre-existing or just created), inject it into context
+    if (currentTodos.length > 0) {
+      const todoListString = currentTodos
+        .map((t: TodoItem) => `- [${t.status === 'completed' ? 'x' : ' '}] ${t.content} (${t.status})`)
+        .join('\n');
+      
+      planContextString = `\n\nCURRENT PROJECT PLAN (Follow this strictly):\n${todoListString}\n\nTo update the plan, use the 'todo_write' tool.`;
+    }
+    // --- PLANNER INTEGRATION END ---
+
     const abortController = new AbortController();
 
     const { processedQuery, shouldProceed } = await handleAtCommand({
-      query: input,
+      query: input + planContextString, // Inject plan into the query
       config,
       addItem: (_item, _timestamp) => 0,
       onDebugMessage: () => {},
