@@ -294,12 +294,16 @@ export class LoopDetectedEvent implements BaseTelemetryEvent {
   'event.timestamp': string;
   loop_type: LoopType;
   prompt_id: string;
+  message?: string;
 
-  constructor(loop_type: LoopType, prompt_id: string) {
+  constructor(loop_type: LoopType, prompt_id: string, message?: string) {
     this['event.name'] = 'loop_detected';
     this['event.timestamp'] = new Date().toISOString();
     this.loop_type = loop_type;
     this.prompt_id = prompt_id;
+    if (message) {
+      this.message = message;
+    }
   }
 }
 

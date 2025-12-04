@@ -23,6 +23,17 @@ const CONTENT_CHUNK_SIZE = 50;
 const MAX_HISTORY_LENGTH = 1000;
 
 /**
+ * Threshold for detecting excessive ReadFile calls on the same file.
+ * If more than this many ReadFile calls target the same file in recent history, it's considered a loop.
+ */
+const READ_FILE_SAME_FILE_THRESHOLD = 6;
+
+/**
+ * How many recent ReadFile calls to track for same-file detection.
+ */
+const READ_FILE_HISTORY_SIZE = 10;
+
+/**
  * The number of recent conversation turns to include in the history when asking the LLM to check for a loop.
  */
 const LLM_LOOP_CHECK_HISTORY_COUNT = 20;
@@ -61,6 +72,9 @@ export class LoopDetectionService {
   // Tool call tracking
   private lastToolCallKey: string | null = null;
   private toolCallRepetitionCount: number = 0;
+
+  // ReadFile tracking: track recent ReadFile calls to detect excessive reads on same file
+  private recentReadFiles: Array<{ filePath: string; offset?: number; limit?: number }> = [];
 
   // Content streaming tracking
   private streamContentHistory = '';
@@ -135,6 +149,17 @@ export class LoopDetectionService {
   }
 
   private checkToolCallLoop(toolCall: { name: string; args: object }): boolean {
+    // Special handling for ReadFile to detect excessive reads on the same file
+    if (toolCall.name === 'read_file' && typeof toolCall.args === 'object' && toolCall.args !== null) {
+      const args = toolCall.args as { absolute_path?: string; offset?: number; limit?: number };
+      if (args.absolute_path) {
+        const loopDetected = this.checkReadFileLoop(args.absolute_path, args.offset, args.limit);
+        if (loopDetected) {
+          return true;
+        }
+      }
+    }
+
     const key = this.getToolCallKey(toolCall);
     if (this.lastToolCallKey === key) {
       this.toolCallRepetitionCount++;
@@ -152,6 +177,37 @@ export class LoopDetectionService {
       );
       return true;
     }
+    return false;
+  }
+
+  /**
+   * Checks if there are too many ReadFile calls on the same file.
+   * This detects patterns like reading small chunks repeatedly from the same file.
+   */
+  private checkReadFileLoop(filePath: string, offset?: number, limit?: number): boolean {
+    // Add current read to history
+    this.recentReadFiles.push({ filePath, offset, limit });
+    
+    // Keep only recent history
+    if (this.recentReadFiles.length > READ_FILE_HISTORY_SIZE) {
+      this.recentReadFiles.shift();
+    }
+
+    // Count how many times the same file appears in recent history
+    const sameFileCount = this.recentReadFiles.filter(read => read.filePath === filePath).length;
+    
+    if (sameFileCount >= READ_FILE_SAME_FILE_THRESHOLD) {
+      logLoopDetected(
+        this.config,
+        new LoopDetectedEvent(
+          LoopType.CONSECUTIVE_IDENTICAL_TOOL_CALLS,
+          this.promptId,
+          `Excessive ReadFile calls detected: ${sameFileCount} reads of the same file "${filePath}" in recent history. This suggests the AI is reading the file in many small chunks instead of reading a larger section at once.`,
+        ),
+      );
+      return true;
+    }
+
     return false;
   }
 
@@ -440,6 +496,7 @@ Please analyze the conversation history to determine the possibility that the co
   private resetToolCallCount(): void {
     this.lastToolCallKey = null;
     this.toolCallRepetitionCount = 0;
+    this.recentReadFiles = [];
   }
 
   private resetContentTracking(resetHistory = true): void {

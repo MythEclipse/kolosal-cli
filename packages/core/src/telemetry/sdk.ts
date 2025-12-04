@@ -37,14 +37,19 @@ import {
   FileSpanExporter,
 } from './file-exporters.js';
 
-// For troubleshooting, set the log level to DiagLogLevel.DEBUG
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
-
 let sdk: NodeSDK | undefined;
 let telemetryInitialized = false;
+let diagLoggerInitialized = false;
 
 export function isTelemetrySdkInitialized(): boolean {
   return telemetryInitialized;
+}
+
+function initializeDiagLogger(): void {
+  if (diagLoggerInitialized) return;
+  // For troubleshooting, set the log level to DiagLogLevel.DEBUG
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+  diagLoggerInitialized = true;
 }
 
 function parseOtlpEndpoint(
@@ -76,6 +81,9 @@ export function initializeTelemetry(config: Config): void {
   if (telemetryInitialized || !config.getTelemetryEnabled()) {
     return;
   }
+
+  // Initialize diagnostic logger once
+  initializeDiagLogger();
 
   const resource = resourceFromAttributes({
     [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
