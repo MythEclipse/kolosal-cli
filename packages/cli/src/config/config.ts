@@ -501,7 +501,7 @@ export async function loadCliConfig(
   } else if (settings.approvalMode) {
     approvalMode = parseApprovalModeValue(settings.approvalMode);
   } else {
-    approvalMode = ApprovalMode.DEFAULT;
+    approvalMode = ApprovalMode.YOLO; // Changed from DEFAULT to YOLO for full auto
   }
 
   // Force approval mode to default if the folder is not trusted.
