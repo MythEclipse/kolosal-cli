@@ -68,10 +68,10 @@ class GrepToolInvocation extends BaseToolInvocation<
   /**
    * Checks if a path is within the root directory and resolves it.
    * @param relativePath Path relative to the root directory (or undefined for root).
-   * @returns The absolute path if valid and exists, or null if no path specified (to search all directories).
-   * @throws {Error} If path is outside root, doesn't exist, or isn't a directory.
+   * @returns Object with searchPath (path to search - directory or file) and isFile flag, or null if no path specified.
+   * @throws {Error} If path is outside root or doesn't exist.
    */
-  private resolveAndValidatePath(relativePath?: string): string | null {
+  private resolveAndValidatePath(relativePath?: string): { searchPath: string; isFile: boolean } | null {
     // If no path specified, return null to indicate searching all workspace directories
     if (!relativePath) {
       return null;
@@ -91,35 +91,45 @@ class GrepToolInvocation extends BaseToolInvocation<
     // Check existence and type after resolving
     try {
       const stats = fs.statSync(targetPath);
-      if (!stats.isDirectory()) {
-        throw new Error(`Path is not a directory: ${targetPath}`);
+      if (stats.isDirectory()) {
+        return { searchPath: targetPath, isFile: false };
+      } else if (stats.isFile()) {
+        // If it's a file, return the file path directly to search inside it
+        return { searchPath: targetPath, isFile: true };
+      } else {
+        throw new Error(`Path is neither a file nor a directory: ${targetPath}`);
       }
     } catch (error: unknown) {
-      if (isNodeError(error) && error.code !== 'ENOENT') {
+      if (isNodeError(error) && error.code === 'ENOENT') {
         throw new Error(`Path does not exist: ${targetPath}`);
       }
       throw new Error(
         `Failed to access path stats for ${targetPath}: ${error}`,
       );
     }
-
-    return targetPath;
   }
 
   async execute(signal: AbortSignal): Promise<ToolResult> {
     try {
       const workspaceContext = this.config.getWorkspaceContext();
-      const searchDirAbs = this.resolveAndValidatePath(this.params.path);
+      const pathInfo = this.resolveAndValidatePath(this.params.path);
       const searchDirDisplay = this.params.path || '.';
 
-      // Determine which directories to search
-      let searchDirectories: readonly string[];
-      if (searchDirAbs === null) {
+      // Determine what to search: directories, a single file, or all workspace
+      let searchPaths: Array<{ path: string; isFile: boolean }>;
+      let includeFilter = this.params.include;
+      
+      if (pathInfo === null) {
         // No path specified - search all workspace directories
-        searchDirectories = workspaceContext.getDirectories();
+        searchPaths = workspaceContext.getDirectories().map(dir => ({ path: dir, isFile: false }));
+      } else if (pathInfo.isFile) {
+        // File path provided - search inside that specific file only
+        searchPaths = [{ path: pathInfo.searchPath, isFile: true }];
+        // When searching a specific file, ignore include filter
+        includeFilter = undefined;
       } else {
-        // Specific path provided - search only that directory
-        searchDirectories = [searchDirAbs];
+        // Directory path provided - search in that directory
+        searchPaths = [{ path: pathInfo.searchPath, isFile: false }];
       }
 
       let allMatches: GrepMatch[] = [];
@@ -129,16 +139,17 @@ class GrepToolInvocation extends BaseToolInvocation<
         console.log(`[GrepTool] Total result limit: ${totalMaxMatches}`);
       }
 
-      for (const searchDir of searchDirectories) {
+      for (const searchInfo of searchPaths) {
         const searchResult = await this.performRipgrepSearch({
           pattern: this.params.pattern,
-          path: searchDir,
-          include: this.params.include,
+          path: searchInfo.path,
+          include: searchInfo.isFile ? undefined : includeFilter,
           signal,
         });
 
-        if (searchDirectories.length > 1) {
-          const dirName = path.basename(searchDir);
+        // Add directory prefix if searching multiple directories
+        if (searchPaths.length > 1 && !searchInfo.isFile) {
+          const dirName = path.basename(searchInfo.path);
           searchResult.forEach((match) => {
             match.filePath = path.join(dirName, match.filePath);
           });
@@ -153,7 +164,7 @@ class GrepToolInvocation extends BaseToolInvocation<
       }
 
       let searchLocationDescription: string;
-      if (searchDirAbs === null) {
+      if (pathInfo === null) {
         const numDirs = workspaceContext.getDirectories().length;
         searchLocationDescription =
           numDirs > 1
@@ -433,10 +444,10 @@ export class RipGrepTool extends BaseDeclarativeTool<
   /**
    * Checks if a path is within the root directory and resolves it.
    * @param relativePath Path relative to the root directory (or undefined for root).
-   * @returns The absolute path if valid and exists, or null if no path specified (to search all directories).
-   * @throws {Error} If path is outside root, doesn't exist, or isn't a directory.
+   * @returns Object with searchPath (path to search - directory or file) and isFile flag, or null if no path specified.
+   * @throws {Error} If path is outside root or doesn't exist.
    */
-  private resolveAndValidatePath(relativePath?: string): string | null {
+  private resolveAndValidatePath(relativePath?: string): { searchPath: string; isFile: boolean } | null {
     // If no path specified, return null to indicate searching all workspace directories
     if (!relativePath) {
       return null;
@@ -456,19 +467,22 @@ export class RipGrepTool extends BaseDeclarativeTool<
     // Check existence and type after resolving
     try {
       const stats = fs.statSync(targetPath);
-      if (!stats.isDirectory()) {
-        throw new Error(`Path is not a directory: ${targetPath}`);
+      if (stats.isDirectory()) {
+        return { searchPath: targetPath, isFile: false };
+      } else if (stats.isFile()) {
+        // If it's a file, return the file path directly to search inside it
+        return { searchPath: targetPath, isFile: true };
+      } else {
+        throw new Error(`Path is neither a file nor a directory: ${targetPath}`);
       }
     } catch (error: unknown) {
-      if (isNodeError(error) && error.code !== 'ENOENT') {
+      if (isNodeError(error) && error.code === 'ENOENT') {
         throw new Error(`Path does not exist: ${targetPath}`);
       }
       throw new Error(
         `Failed to access path stats for ${targetPath}: ${error}`,
       );
     }
-
-    return targetPath;
   }
 
   /**

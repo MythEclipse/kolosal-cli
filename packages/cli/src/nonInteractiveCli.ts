@@ -5,24 +5,53 @@
  */
 
 import {
-  executeToolCall,
   shutdownTelemetry,
   isTelemetrySdkInitialized,
-  GeminiEventType,
   parseAndFormatApiError,
   FatalInputError,
-  FatalTurnLimitedError,
   readTodosForSession,
   ContextState,
   SubagentTerminateMode,
   type Config,
-  type ToolCallRequestInfo,
   type TodoItem,
+  QWEN_DIR,
 } from '@kolosal-ai/kolosal-ai-core';
-import type { Content, Part } from '@google/genai';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as process from 'process';
 
 import { ConsolePatcher } from './ui/utils/ConsolePatcher.js';
 import { handleAtCommand } from './ui/hooks/atCommandProcessor.js';
+
+const TODO_SUBDIR = 'todos';
+
+function getTodoFilePath(sessionId?: string): string {
+  const homeDir =
+    process.env['HOME'] || process.env['USERPROFILE'] || process.cwd();
+  const todoDir = path.join(homeDir, QWEN_DIR, TODO_SUBDIR);
+  const filename = `${sessionId || 'default'}.json`;
+  return path.join(todoDir, filename);
+}
+
+async function writeTodosToFile(
+  todos: TodoItem[],
+  sessionId?: string,
+): Promise<void> {
+  const todoFilePath = getTodoFilePath(sessionId);
+  const todoDir = path.dirname(todoFilePath);
+  await fs.mkdir(todoDir, { recursive: true });
+  const data = { todos, sessionId: sessionId || 'default' };
+  await fs.writeFile(todoFilePath, JSON.stringify(data, null, 2), 'utf-8');
+}
+
+function extractTextFromQuery(processedQuery: any): string {
+  if (Array.isArray(processedQuery)) {
+    return processedQuery.map((p: any) => p.text || '').join('\n');
+  } else if (processedQuery && typeof processedQuery === 'object') {
+    return (processedQuery as any).text || '';
+  }
+  return '';
+}
 
 export async function runNonInteractive(
   config: Config,
@@ -36,73 +65,19 @@ export async function runNonInteractive(
 
   try {
     consolePatcher.patch();
-    // Handle EPIPE errors when the output is piped to a command that closes early.
     process.stdout.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code === 'EPIPE') {
-        // Exit gracefully if the pipe is closed.
         process.exit(0);
       }
     });
 
-    const geminiClient = config.getGeminiClient();
-
-    // --- PLANNER INTEGRATION START ---
-    // Check if we already have a plan (todos) for this session
     const sessionId = config.getSessionId();
-    let currentTodos = await readTodosForSession(sessionId);
-    let planContextString = '';
-
-    // If no plan exists, try to run the planner agent
-    if (currentTodos.length === 0) {
-      const subagentManager = config.getSubagentManager();
-      const plannerConfig = await subagentManager.loadSubagent('planner');
-
-      if (plannerConfig) {
-        if (config.getDebugMode()) {
-          console.log('No existing plan found. engaging Planner Agent...');
-        }
-        
-        // Create context for planner
-        const plannerContext = new ContextState();
-        plannerContext.set('task_prompt', input);
-
-        // Create scope
-        const plannerScope = await subagentManager.createSubagentScope(
-          plannerConfig,
-          config
-        );
-
-        // Run planner
-        // We use a separate abort controller for the planner to isolate it
-        const plannerAbortController = new AbortController();
-        await plannerScope.runNonInteractive(plannerContext, plannerAbortController.signal);
-
-        // Check if plan was created
-        if (plannerScope.getTerminateMode() === SubagentTerminateMode.GOAL) {
-           currentTodos = await readTodosForSession(sessionId);
-           if (currentTodos.length > 0) {
-             if (config.getDebugMode()) {
-               console.log('Plan created successfully.');
-             }
-           }
-        }
-      }
-    }
-
-    // If we have a plan (either pre-existing or just created), inject it into context
-    if (currentTodos.length > 0) {
-      const todoListString = currentTodos
-        .map((t: TodoItem) => `- [${t.status === 'completed' ? 'x' : ' '}] ${t.content} (${t.status})`)
-        .join('\n');
-      
-      planContextString = `\n\nCURRENT PROJECT PLAN (Follow this strictly):\n${todoListString}\n\nTo update the plan, use the 'todo_write' tool.`;
-    }
-    // --- PLANNER INTEGRATION END ---
-
+    const subagentManager = config.getSubagentManager();
     const abortController = new AbortController();
 
+    // --- 1. PRE-PROCESSING (@ COMMANDS) ---
     const { processedQuery, shouldProceed } = await handleAtCommand({
-      query: input + planContextString, // Inject plan into the query
+      query: input,
       config,
       addItem: (_item, _timestamp) => 0,
       onDebugMessage: () => {},
@@ -111,74 +86,130 @@ export async function runNonInteractive(
     });
 
     if (!shouldProceed || !processedQuery) {
-      // An error occurred during @include processing (e.g., file not found).
-      // The error message is already logged by handleAtCommand.
       throw new FatalInputError(
         'Exiting due to an error processing the @ command.',
       );
     }
 
-    let currentMessages: Content[] = [
-      { role: 'user', parts: processedQuery as Part[] },
-    ];
+    // --- 2. PLANNER PHASE ---
+    let currentTodos = await readTodosForSession(sessionId);
 
-    let turnCount = 0;
-    while (true) {
-      turnCount++;
-      if (
-        config.getMaxSessionTurns() >= 0 &&
-        turnCount > config.getMaxSessionTurns()
-      ) {
-        throw new FatalTurnLimitedError(
-          'Reached max session turns for this session. Increase the number of turns by specifying maxSessionTurns in settings.json.',
+    if (currentTodos.length === 0) {
+      const plannerConfig = await subagentManager.loadSubagent('planner');
+      if (plannerConfig) {
+        if (config.getDebugMode()) {
+          console.log('No existing plan found. Engaging Planner Agent...');
+        }
+        const plannerContext = new ContextState();
+        
+        const queryText = extractTextFromQuery(processedQuery);
+        plannerContext.set('task_prompt', queryText);
+
+        const plannerScope = await subagentManager.createSubagentScope(
+          plannerConfig,
+          config,
         );
-      }
-      const toolCallRequests: ToolCallRequestInfo[] = [];
+        const plannerAbort = new AbortController();
+        await plannerScope.runNonInteractive(
+          plannerContext,
+          plannerAbort.signal,
+        );
 
-      const responseStream = geminiClient.sendMessageStream(
-        currentMessages[0]?.parts || [],
-        abortController.signal,
-        prompt_id,
-      );
-
-      for await (const event of responseStream) {
-        if (abortController.signal.aborted) {
-          console.error('Operation cancelled.');
-          return;
-        }
-
-        if (event.type === GeminiEventType.Content) {
-          process.stdout.write(event.value);
-        } else if (event.type === GeminiEventType.ToolCallRequest) {
-          toolCallRequests.push(event.value);
-        }
-      }
-
-      if (toolCallRequests.length > 0) {
-        const toolResponseParts: Part[] = [];
-        for (const requestInfo of toolCallRequests) {
-          const toolResponse = await executeToolCall(
-            config,
-            requestInfo,
-            abortController.signal,
-          );
-
-          if (toolResponse.error) {
-            console.error(
-              `Error executing tool ${requestInfo.name}: ${toolResponse.resultDisplay || toolResponse.error.message}`,
-            );
-          }
-
-          if (toolResponse.responseParts) {
-            toolResponseParts.push(...toolResponse.responseParts);
+        if (plannerScope.getTerminateMode() === SubagentTerminateMode.GOAL) {
+          currentTodos = await readTodosForSession(sessionId);
+          if (currentTodos.length > 0 && config.getDebugMode()) {
+            console.log('Plan created successfully.');
           }
         }
-        currentMessages = [{ role: 'user', parts: toolResponseParts }];
-      } else {
-        process.stdout.write('\n'); // Ensure a final newline
-        return;
       }
     }
+
+    // --- 3. EXECUTION ORCHESTRATOR LOOP ---
+    if (currentTodos.length === 0) {
+       // Fallback: If no plan could be created, run as a single general-purpose task
+       const gpConfig = await subagentManager.loadSubagent('general-purpose');
+       if (!gpConfig) throw new Error("General purpose agent not found");
+       
+       const gpContext = new ContextState();
+       const queryText = extractTextFromQuery(processedQuery);
+       gpContext.set('task_prompt', queryText);
+       
+       const gpScope = await subagentManager.createSubagentScope(gpConfig, config);
+       await gpScope.runNonInteractive(gpContext, abortController.signal);
+       return;
+    }
+
+    console.log(`\nStarting execution of ${currentTodos.length} tasks...\n`);
+
+    while (true) {
+      // Re-read todos to get latest state
+      const todos = await readTodosForSession(sessionId);
+      const nextTask = todos.find(
+        (t) => t.status === 'pending' || t.status === 'in_progress',
+      );
+
+      if (!nextTask) {
+        console.log('All tasks completed successfully!');
+        break;
+      }
+
+      console.log(`\n>>> Executing Task: ${nextTask.content} (${nextTask.status})`);
+
+      // Update status to in_progress if pending
+      if (nextTask.status === 'pending') {
+        nextTask.status = 'in_progress';
+        await writeTodosToFile(todos, sessionId);
+      }
+
+      // Prepare SubAgent for this specific task
+      const workerConfig = await subagentManager.loadSubagent('general-purpose');
+      if (!workerConfig) {
+          throw new Error('Could not load general-purpose agent for execution');
+      }
+
+      const workerContext = new ContextState();
+      const planContext = todos
+        .map((t) => `- [${t.status === 'completed' ? 'x' : ' '}] ${t.content}`)
+        .join('\n');
+      
+      const taskPrompt = `
+You are the Execution Agent working on a larger project.
+Your CURRENT GOAL is to complete this specific task:
+"${nextTask.content}"
+
+PROJECT CONTEXT (Plan):
+${planContext}
+
+INSTRUCTIONS:
+1. Focus ONLY on the current task.
+2. Use the available tools (edit, grep, ls, etc.) to execute the task.
+3. Verify your work! (e.g., run a build or test if applicable).
+4. When you are done, simply finish. Do NOT use the 'todo_write' tool; the system will update the status for you.
+`.trim();
+
+      workerContext.set('task_prompt', taskPrompt);
+
+      const workerScope = await subagentManager.createSubagentScope(
+        workerConfig,
+        config,
+      );
+      
+      const workerAbort = new AbortController();
+      await workerScope.runNonInteractive(workerContext, workerAbort.signal);
+
+      // Check result
+      const result = workerScope.getTerminateMode();
+      if (result === SubagentTerminateMode.GOAL) {
+        console.log(`>>> Task Completed: ${nextTask.content}`);
+        nextTask.status = 'completed';
+        await writeTodosToFile(todos, sessionId);
+      } else {
+        console.error(`>>> Task Failed: ${nextTask.content}. Reason: ${result}`);
+        console.error('Stopping execution due to task failure.');
+        break; 
+      }
+    }
+
   } catch (error) {
     console.error(
       parseAndFormatApiError(
