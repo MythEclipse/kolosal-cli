@@ -53,7 +53,7 @@ const mockEmbedContentFn = vi.fn();
 const mockTurnRunFn = vi.fn();
 
 let ApprovalModeEnum: typeof import('../config/config.js').ApprovalMode;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let mockConfigObject: any;
 
 vi.mock('@google/genai');

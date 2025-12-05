@@ -1034,7 +1034,7 @@ export class Config {
     const registry = new ToolRegistry(this);
 
     // helper to create & register core tools that are enabled
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const registerCoreTool = (ToolClass: any, ...args: unknown[]) => {
       const className = ToolClass.name;
       const toolName = ToolClass.Name || className;

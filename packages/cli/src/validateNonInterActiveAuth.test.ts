@@ -79,7 +79,7 @@ describe('validateNonInterActiveAuth', () => {
   expect(refreshAuthMock).toHaveBeenCalledWith(AuthType.USE_OPENAI);
   });
 
-  it('uses USE_OPENAI if OPENAI_API_KEY is set', async () => {
+  it('uses USE_OPENAI if OPENAI_API_KEY is set (duplicate test)', async () => {
     process.env['OPENAI_API_KEY'] = 'fake-openai-key';
     const nonInteractiveConfig: NonInteractiveConfig = {
       refreshAuth: refreshAuthMock,

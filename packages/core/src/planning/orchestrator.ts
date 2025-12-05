@@ -307,7 +307,7 @@ export class Orchestrator {
         stepsCompleted: completedSteps.size,
         totalSteps: plan.steps.length,
         executionTime: Date.now() - (this.currentExecutionStateId ? 0 : Date.now()), // Simplified execution time
-        contextAnalysis: contextAnalysis
+        contextAnalysis,
       };
 
       const finalReport = await this.multiModalService.createComprehensiveReport({

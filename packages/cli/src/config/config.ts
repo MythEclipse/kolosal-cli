@@ -44,11 +44,11 @@ import { isWorkspaceTrusted } from './trustedFolders.js';
 
 // Simple console logger for now - replace with actual logger if available
 const logger = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   debug: (...args: any[]) => console.debug('[DEBUG]', ...args),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   warn: (...args: any[]) => console.warn('[WARN]', ...args),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   error: (...args: any[]) => console.error('[ERROR]', ...args),
 };
 

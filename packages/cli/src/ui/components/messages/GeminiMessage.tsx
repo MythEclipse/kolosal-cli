@@ -15,7 +15,7 @@ interface GeminiMessageProps {
   isPending: boolean;
   availableTerminalHeight?: number;
   terminalWidth: number;
-  isFirstAssistantMessage?: boolean;
+  _isFirstAssistantMessage?: boolean;
 }
 
 export const GeminiMessage: React.FC<GeminiMessageProps> = ({
@@ -23,7 +23,7 @@ export const GeminiMessage: React.FC<GeminiMessageProps> = ({
   isPending,
   availableTerminalHeight,
   terminalWidth,
-  isFirstAssistantMessage = false,
+  _isFirstAssistantMessage = false,
 }) => {
   const prefix = '✦ ';
   const prefixWidth = prefix.length;

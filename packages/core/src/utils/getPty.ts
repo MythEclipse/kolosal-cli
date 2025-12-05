@@ -5,7 +5,7 @@
  */
 
 export type PtyImplementation = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   module: any;
   name: 'lydell-node-pty' | 'node-pty';
 } | null;

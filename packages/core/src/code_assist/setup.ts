@@ -6,7 +6,7 @@
 
 
 import type { OAuth2Client } from 'google-auth-library';
-import { UserTierId } from './types.js';
+import type { UserTierId } from './types.js';
 
 export class ProjectIdRequiredError extends Error {
   constructor() {
@@ -26,7 +26,7 @@ export interface UserData {
  * @param projectId the user's project id, if any
  * @returns the user's actual project id
  */
-export async function setupUser(client: OAuth2Client): Promise<UserData> {
+export async function setupUser(_client: OAuth2Client): Promise<UserData> {
   // Google Cloud authentication is no longer supported
   throw new ProjectIdRequiredError();
 }

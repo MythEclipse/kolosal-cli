@@ -950,7 +950,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
         } else if (!result.error) {
           settings.setValue(SettingScope.User, 'kolosalOAuthToken', undefined);
         }
-      } catch (error) {
+      } catch (_error) {
         if (isCancelled) {
           return;
         }
@@ -1064,9 +1064,6 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     setKolosalOAuthTokenState,
     setKolosalOAuthUser,
     settings,
-    setOpenAIApiKey,
-    setOpenAIBaseUrl,
-    setKolosalOAuthToken,
   ]);
 
   useEffect(() => {
@@ -1443,6 +1440,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
   }, [
     settings.merged.contentGenerator?.provider,
     settings.merged.contentGenerator?.huggingface?.selectedModelId,
+    settings.merged,
     isHfPickerOpen,
     isHfFilePickerOpen,
     closeHfPicker,
@@ -1673,6 +1671,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
       closeHfPicker,
       setAuthSelectionCompleted,
       hfDownloadsByFilename,
+      configureLocalModel,
     ],
   );
 
@@ -2361,7 +2360,7 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     }
 
     switch (authType) {
-      case AuthType.USE_OPENAI:
+      case AuthType.NO_AUTH:
         return getFilteredQwenModels(visionModelPreviewEnabled);
       case AuthType.USE_OPENAI: {
         const openAIModel = getOpenAIAvailableModelFromEnv();
@@ -2859,6 +2858,8 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
     welcomeBackChoice,
     geminiClient,
     isModelSelectionDialogOpen,
+    isHfPickerOpen,
+    isHfFilePickerOpen,
     isVisionSwitchDialogOpen,
   ]);
 

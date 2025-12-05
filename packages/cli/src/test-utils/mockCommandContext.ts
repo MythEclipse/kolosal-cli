@@ -45,7 +45,7 @@ export const createMockCommandContext = (
         logMessage: vi.fn(),
         saveCheckpoint: vi.fn(),
         loadCheckpoint: vi.fn().mockResolvedValue([]),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
       } as any, // Cast because Logger is a class.
     },
     ui: {
@@ -57,7 +57,7 @@ export const createMockCommandContext = (
       loadHistory: vi.fn(),
       toggleCorgiMode: vi.fn(),
       toggleVimEnabled: vi.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
     } as any,
     session: {
       sessionShellAllowlist: new Set<string>(),
@@ -80,7 +80,7 @@ export const createMockCommandContext = (
     },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const merge = (target: any, source: any): any => {
     const output = { ...target };
 

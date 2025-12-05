@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/* global process */
+
 import esbuild from 'esbuild';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

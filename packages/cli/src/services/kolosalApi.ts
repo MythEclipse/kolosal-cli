@@ -73,9 +73,7 @@ export async function fetchKolosalModels(
     
     // Filter out any invalid models - only check that it's an object
     // Allow models with any structure as long as they're objects
-    const validModels = data.models.filter((model) => {
-      return model && typeof model === 'object';
-    });
+    const validModels = data.models.filter((model) => model && typeof model === 'object');
     
     if (validModels.length === 0 && data.models.length > 0) {
       console.error('All models filtered out. First model:', JSON.stringify(data.models[0], null, 2));

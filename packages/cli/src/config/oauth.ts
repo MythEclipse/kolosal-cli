@@ -91,7 +91,7 @@ export async function pollForToken(
     }
 
     return response.json();
-  } catch (error) {
+  } catch (_error) {
     return {
       error: 'network_error',
       error_description: 'Network error: Unable to connect to Kolosal Cloud.',
@@ -122,7 +122,7 @@ export async function validateToken(accessToken: string): Promise<{
     }
 
     return response.json();
-  } catch (error) {
+  } catch (_error) {
     return { valid: false };
   }
 }
@@ -161,7 +161,7 @@ export async function validateApiKey(apiKey: string): Promise<{
     }
 
     return { valid: true };
-  } catch (error) {
+  } catch (_error) {
     return { valid: false, error: 'network-error' };
   }
 }
@@ -227,7 +227,7 @@ export async function revokeToken(accessToken: string): Promise<void> {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-  } catch (error) {
+  } catch (_error) {
     // Silently fail - token revocation is best-effort
   }
 }
@@ -247,7 +247,7 @@ export function openBrowser(url: string): void {
       // Linux and others
       execSync(`xdg-open "${url}"`);
     }
-  } catch (error) {
+  } catch (_error) {
     // Silently fail - user can manually open the URL
   }
 }

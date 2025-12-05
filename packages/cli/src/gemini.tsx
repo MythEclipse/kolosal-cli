@@ -233,7 +233,7 @@ export async function startInteractiveUI(
 export async function startServerOnly(
   config: Config,
   settings: LoadedSettings,
-  workspaceRoot: string,
+  _workspaceRoot: string,
 ): Promise<void> {
   // Server-only mode - no UI, no interactive elements
   // Skip UI initialization, theme loading, and desktop integration

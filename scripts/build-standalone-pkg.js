@@ -21,7 +21,7 @@ const pkg = require(path.join(rootDir, 'package.json'));
 
 // Node.js version to bundle
 const NODE_VERSION = process.version; // Use the same version we're running
-const NODE_MAJOR = NODE_VERSION.split('.')[0].substring(1); // e.g., "20"
+// const NODE_MAJOR = NODE_VERSION.split('.')[0].substring(1); // e.g., "20"
 
 async function bundleNodejs(nodeDir) {
   console.log(`📥 Bundling Node.js ${NODE_VERSION}...`);
@@ -210,7 +210,7 @@ async function bundleHomebrewLibraries(libDir) {
       
       console.log(`   ✓ Copied: ${lib}`);
       copiedCount++;
-    } catch (error) {
+    } catch (_error) {
       console.warn(`   ⚠️  Skipped ${lib}: not found at ${srcPath}`);
       skippedCount++;
     }
@@ -232,7 +232,7 @@ async function bundleHomebrewLibraries(libDir) {
       // Update the install name (ID) to use @rpath
       try {
         await execAsync(`install_name_tool -id "@rpath/${dylibName}" "${dylibFile}"`);
-      } catch (error) {
+      } catch (_error) {
         // Might fail if already set, that's okay
       }
       
@@ -263,7 +263,7 @@ async function bundleHomebrewLibraries(libDir) {
             }
           }
         }
-      } catch (error) {
+      } catch (_error) {
         console.warn(`   ⚠️  Could not analyze dependencies for ${dylibName}`);
       }
     }

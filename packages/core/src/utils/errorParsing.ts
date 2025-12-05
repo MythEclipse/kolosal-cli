@@ -90,7 +90,7 @@ function getRateLimitMessage(
           : getRateLimitErrorMessageGoogleFree(fallbackModel);
       }
     }
-    case AuthType.USE_OPENAI:
+    case AuthType.NO_AUTH:
       return RATE_LIMIT_ERROR_MESSAGE_OPENAI;
     default:
       return getRateLimitErrorMessageDefault(fallbackModel);

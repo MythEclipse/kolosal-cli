@@ -904,7 +904,7 @@ describe('CoreToolScheduler edit cancellation', () => {
     expect(completedCalls[0].status).toBe('cancelled');
 
     // Check that the diff is preserved
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const cancelledCall = completedCalls[0] as any;
     expect(cancelledCall.response.resultDisplay).toBeDefined();
     expect(cancelledCall.response.resultDisplay.fileDiff).toBe(
@@ -1130,7 +1130,7 @@ describe('CoreToolScheduler cancellation during executing with live output', () 
     const completedCalls = onAllToolCallsComplete.mock
       .calls[0][0] as ToolCall[];
     expect(completedCalls[0].status).toBe('cancelled');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const cancelled: any = completedCalls[0];
     expect(cancelled.response.resultDisplay).toBe('hello');
   });

@@ -118,7 +118,7 @@ export function createContentGeneratorConfig(
 export async function createContentGenerator(
   config: ContentGeneratorConfig,
   gcConfig: Config,
-  sessionId?: string,
+  _sessionId?: string,
 ): Promise<ContentGenerator> {
   if (config.authType === AuthType.USE_OPENAI) {
     if (!config.apiKey) {

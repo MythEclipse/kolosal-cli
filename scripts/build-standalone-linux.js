@@ -21,7 +21,7 @@ const pkg = require(path.join(rootDir, 'package.json'));
 
 // Node.js version to bundle
 const NODE_VERSION = process.version; // Use the same version we're running
-const NODE_MAJOR = NODE_VERSION.split('.')[0].substring(1); // e.g., "20"
+// const NODE_MAJOR = NODE_VERSION.split('.')[0].substring(1); // e.g., "20"
 
 async function bundleNodejs(nodeDir) {
   console.log(`📥 Bundling Node.js ${NODE_VERSION}...`);
@@ -189,7 +189,7 @@ async function createDeb(appDir) {
       dependencies = deps.packages.join(', ');
       console.log(`   Using ${deps.packages.length} package dependencies from analysis`);
     }
-  } catch (error) {
+  } catch (_error) {
     console.warn(`   ⚠️  Could not load package dependencies, using defaults`);
   }
   
@@ -250,7 +250,7 @@ exit 0
   try {
     const { stdout } = await execAsync(`dpkg-deb --info "${debOutput}"`);
     console.log(stdout);
-  } catch (error) {
+  } catch (_error) {
     console.warn('⚠️  Could not read package info (dpkg-deb might not be installed)');
   }
   
@@ -311,7 +311,7 @@ async function createRpm(appDir) {
       rpmRequires = rpmPackages.map(pkg => `Requires: ${pkg}`).join('\n');
       console.log(`   Using ${rpmPackages.length} package dependencies for RPM`);
     }
-  } catch (error) {
+  } catch (_error) {
     console.warn(`   ⚠️  Could not load package dependencies for RPM`);
   }
   

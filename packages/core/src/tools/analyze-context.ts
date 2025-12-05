@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { BaseDeclarativeTool, BaseToolInvocation, Kind, type ToolResult } from './tools.js';
 import type { ContextAnalysisService, ContextAnalysisResult } from '../services/contextAnalysisService.js';
 
-const AnalyzeContextParamsSchema = z.object({
+const _AnalyzeContextParamsSchema = z.object({
   action: z.enum(['analyze', 'suggest-tools', 'get-patterns', 'get-recommendations']).describe('The analysis action to perform'),
   projectPath: z.string().optional().describe('Path to the project to analyze (defaults to current directory)'),
   includePatterns: z.boolean().optional().describe('Whether to include code pattern analysis'),

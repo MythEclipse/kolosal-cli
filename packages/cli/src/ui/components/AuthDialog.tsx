@@ -52,7 +52,7 @@ export function AuthDialog({
       // Don't save apiKey/baseUrl globally - they'll be in saved models
       // Don't save selectedAuthType globally - it's per-model now in authType field
       if (model) settings.setValue(SettingScope.User, 'model.name', model);
-    } catch (e) {
+    } catch (_e) {
       // If persisting fails, still proceed with in-memory values
     }
 

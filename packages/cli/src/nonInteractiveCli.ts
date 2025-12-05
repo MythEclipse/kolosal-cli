@@ -31,7 +31,7 @@ function extractTextFromQuery(processedQuery: any): string {
 export async function runNonInteractive(
   config: Config,
   input: string,
-  prompt_id: string,
+  _prompt_id: string,
 ): Promise<void> {
   const consolePatcher = new ConsolePatcher({
     stderr: true,

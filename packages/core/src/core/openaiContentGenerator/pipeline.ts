@@ -5,6 +5,7 @@
  */
 
 import type OpenAI from 'openai';
+import fs from 'fs';
 import {
   type GenerateContentParameters,
   GenerateContentResponse,
@@ -253,7 +254,7 @@ export class ContentGenerationPipeline {
       console.log('[DEBUG] Tool response IDs:', toolResponseIds);
       
       // Log full message structure to understand ordering
-      const roleSequence = messages.map((m, i) => {
+      const roleSequence = messages.map((m, _i) => {
         if (m.role === 'assistant' && 'tool_calls' in m) {
           return `assistant[calls:${(m as any).tool_calls?.length || 0}]`;
         } else if (m.role === 'tool') {
@@ -295,10 +296,9 @@ export class ContentGenerationPipeline {
       
       // Also write to a temp file for easier debugging
       try {
-        const fs = require('fs');
         fs.writeFileSync('/tmp/kolosal-debug-messages.json', JSON.stringify(messages, null, 2));
         console.log('[DEBUG] Full messages written to /tmp/kolosal-debug-messages.json');
-      } catch (e) {
+      } catch (_e) {
         // Ignore write errors
       }
     }

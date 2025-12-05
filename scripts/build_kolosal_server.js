@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 
 const execAsync = promisify(exec);
-const require = createRequire(import.meta.url);
+const _require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const kolosalServerDir = path.join(rootDir, 'kolosal-server');
@@ -26,14 +26,14 @@ const libExtension = isMac ? '.dylib' : '.so';
 async function buildKolosalServer() {
   console.log('🔨 Building kolosal-server...\n');
   
-  const buildDir = path.join(kolosalServerDir, 'build');
-  const releaseDir = path.join(buildDir, 'Release');
+  // const _buildDir = path.join(kolosalServerDir, 'build');
+  // const releaseDir = path.join(buildDir, 'Release');
   
   try {
     // Check if kolosal-server directory exists
     await fs.access(kolosalServerDir);
     console.log('✅ Found kolosal-server directory');
-  } catch (error) {
+  } catch (_error) {
     throw new Error('❌ kolosal-server directory not found. Make sure the kolosal-server subproject exists.');
   }
 
@@ -55,7 +55,7 @@ async function buildSingleInferenceEngine() {
   try {
     await fs.mkdir(buildDir, { recursive: true });
     console.log('📁 Created build directory');
-  } catch (error) {
+  } catch (_error) {
     console.log('📁 Build directory already exists');
   }
   
@@ -101,7 +101,7 @@ async function buildSingleInferenceEngine() {
     try {
       await fs.access(filePath);
       console.log(`   ✓ ${file}`);
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`❌ Missing build artifact: ${file}`);
     }
   }
@@ -188,7 +188,7 @@ async function buildDualInferenceEngines() {
     try {
       await fs.access(filePath);
       console.log(`     ✓ ${file}`);
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`❌ Missing CPU build artifact: ${file}`);
     }
   }
@@ -199,7 +199,7 @@ async function buildDualInferenceEngines() {
     try {
       await fs.access(filePath);
       console.log(`     ✓ ${file}`);
-    } catch (error) {
+    } catch (_error) {
       console.warn(`⚠️  Missing Vulkan build artifact: ${file}`);
     }
   }

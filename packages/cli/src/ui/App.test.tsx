@@ -741,15 +741,15 @@ describe('App UI', () => {
     const OriginalOpenAIKeyPrompt = OpenAIKeyPromptModule.OpenAIKeyPrompt;
     const openAIKeyPromptMock = vi
       .spyOn(OpenAIKeyPromptModule, 'OpenAIKeyPrompt')
-      .mockImplementation((props) => {
+      .mockImplementation(({ onSubmit }) => {
         useEffect(() => {
-          props.onSubmit(
+          onSubmit(
             'a',
             'https://openrouter.ai/api/v1',
             'moonshotai/kimi-k2-0905',
           );
-        }, [props.onSubmit]);
-        return <OriginalOpenAIKeyPrompt {...props} />;
+        }, [onSubmit]);
+        return <OriginalOpenAIKeyPrompt onSubmit={onSubmit} />;
       });
 
     const settingsWithOssProvider = createMockSettings({

@@ -421,7 +421,7 @@ describe('XmlStyleToolCallParser', () => {
       const parser = new XmlStyleToolCallParser();
       
       // Test with complex JSON similar to user's failing example
-      const complexEmbeddedChunk = 'Let me create a file:functions.write_file:5{"file_path": "/Users/test/game.py", "content": "#!/usr/bin/env python3\\n\\\"\\\"\\\"\\nGame Description\\n\\\"\\\"\\\"\\n\\nclass Game:\\n    def __init__(self):\\n        self.running = True"}';
+      const complexEmbeddedChunk = `Let me create a file:functions.write_file:5{"file_path": "/Users/test/game.py", "content": "#!/usr/bin/env python3\\n\\"\\"\\"\\nGame Description\\n\\"\\"\\"\\n\\nclass Game:\\n    def __init__(self):\\n        self.running = True"}`;
       const result = parser.addChunk(complexEmbeddedChunk);
       
       // Should parse successfully despite complex JSON with escaped quotes and newlines

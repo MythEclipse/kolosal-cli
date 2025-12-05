@@ -33,7 +33,7 @@ export interface LeftBorderPanelProps extends Omit<BoxProps, 'children'> {
 export function LeftBorderPanel({
   children,
   accentColor = Colors.Gray,
-  backgroundColor,
+  _backgroundColor,
   borderCharacter = DEFAULT_RULE_CHARACTER,
   ruleMarginRight = 1,
   contentProps,
@@ -51,7 +51,7 @@ export function LeftBorderPanel({
     const { height } = measureElement(contentRef.current);
     const nextHeight = typeof height === 'number' && height > 0 ? height : 1;
     setContentHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-  });
+  }, []);
 
   const verticalRule = useMemo(() => {
     const rows = Math.max(contentHeight, 1);

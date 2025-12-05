@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { Colors } from '../colors.js';
 import { buildModelsBaseUrl, fetchModels, type HFModel } from '../../services/huggingfaceApi.js';
@@ -157,7 +158,7 @@ export const HfModelPickerDialog: React.FC<HfModelPickerDialogProps> = ({ token,
       <Box flexDirection="column" marginBottom={1}>
         <Text bold>Select a Hugging Face model</Text>
         <Text>
-          Type '/' to search, Enter to select, ↑/↓ to move, PageUp/PageDown to scroll, Esc to cancel.
+          Type &apos;/&apos; to search, Enter to select, ↑/↓ to move, PageUp/PageDown to scroll, Esc to cancel.
         </Text>
       </Box>
       {searchMode && (
@@ -199,7 +200,7 @@ export const HfModelPickerDialog: React.FC<HfModelPickerDialogProps> = ({ token,
       </Box>
       <Box marginTop={1}>
         <Text color={Colors.Gray}>
-          Tip: set HF_TOKEN for higher rate limits. Current query: "{query || ''}"
+          Tip: set HF_TOKEN for higher rate limits. Current query: &quot;{query || ''}&quot;
         </Text>
       </Box>
     </LeftBorderPanel>

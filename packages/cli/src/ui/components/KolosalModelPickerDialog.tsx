@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { Colors } from '../colors.js';
 import {
@@ -65,7 +66,6 @@ export const KolosalModelPickerDialog: React.FC<
         if (!isActive) return;
         setError((e as Error).message);
       } finally {
-        if (!isActive) return;
         setLoading(false);
       }
     }
@@ -145,7 +145,7 @@ export const KolosalModelPickerDialog: React.FC<
             <Box marginTop={1}>
               <Text color={Colors.Gray}>
                 The model list API is still being developed. You can still use Kolosal Cloud 
-                by manually entering model details in the "Use OpenAI Compatible API" option.
+                by manually entering model details in the &quot;Use OpenAI Compatible API&quot; option.
               </Text>
             </Box>
           )}
@@ -289,7 +289,7 @@ export const KolosalModelPickerDialog: React.FC<
       {!loading && models.length > 0 && (
         <Box marginTop={1}>
           <Text color={Colors.Gray}>
-            All models will be saved for quick switching with the 'model'
+            All models will be saved for quick switching with the &apos;model&apos;
             command.
           </Text>
         </Box>

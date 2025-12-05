@@ -67,9 +67,9 @@ export class EnhancedErrorHandler implements ErrorHandler {
       error instanceof Error
         ? error.message.toLowerCase()
         : String(error).toLowerCase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const errorCode = (error as any)?.code;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const errorType = (error as any)?.type;
 
     // Check for common timeout indicators

@@ -389,7 +389,7 @@ describe('Model-specific tool call formats', () => {
     vi.mocked(isGitRepository).mockReturnValue(false);
     const prompt = getCoreSystemPrompt(undefined, undefined, 'qwen-vl-max');
 
-    expect(prompt).toMatch(/<tool_call>[\s\S]*\{\"name\": \"run_shell_command\"/);
+    expect(prompt).toMatch(/<tool_call>[\s\S]*\{"name": "run_shell_command"/);
     expect(prompt).not.toContain('[tool_call: run_shell_command for');
     expect(prompt).not.toContain('<function=run_shell_command>');
   });

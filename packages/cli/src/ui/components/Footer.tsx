@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+ 
+
 import type React from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../semantic-colors.js';
@@ -28,7 +30,7 @@ interface FooterProps {
   errorCount: number;
   showErrorDetails: boolean;
   showMemoryUsage?: boolean;
-  promptTokenCount: number;
+  _promptTokenCount: number;
   nightly: boolean;
   vimMode?: string;
   isTrustedFolder?: boolean;
@@ -44,7 +46,7 @@ export const Footer: React.FC<FooterProps> = ({
   errorCount,
   showErrorDetails,
   showMemoryUsage,
-  promptTokenCount,
+  _promptTokenCount,
   nightly,
   vimMode,
   isTrustedFolder,

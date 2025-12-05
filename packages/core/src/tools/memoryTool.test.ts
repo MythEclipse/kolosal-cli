@@ -334,7 +334,7 @@ describe('MemoryTool', () => {
 
       // Clear allowlist before each test to ensure clean state
       const invocation = memoryTool.build({ fact: 'test', scope: 'global' });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (invocation.constructor as any).allowlist.clear();
     });
 
@@ -395,7 +395,7 @@ describe('MemoryTool', () => {
 
       const invocation = memoryTool.build(params);
       // Add the memory file to the allowlist with the scope-specific key format
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (invocation.constructor as any).allowlist.add(`${memoryFilePath}_global`);
 
       const result = await invocation.shouldConfirmExecute(mockAbortSignal);
@@ -412,7 +412,7 @@ describe('MemoryTool', () => {
 
       const invocation = memoryTool.build(params);
       // Add the memory file to the allowlist with the scope-specific key format
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (invocation.constructor as any).allowlist.add(
         `${memoryFilePath}_project`,
       );
@@ -442,7 +442,7 @@ describe('MemoryTool', () => {
 
         // Check that the memory file was added to the allowlist with the scope-specific key format
         expect(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           (invocation.constructor as any).allowlist.has(
             `${memoryFilePath}_global`,
           ),
@@ -469,7 +469,7 @@ describe('MemoryTool', () => {
 
         // Check that the memory file was added to the allowlist with the scope-specific key format
         expect(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+           
           (invocation.constructor as any).allowlist.has(
             `${memoryFilePath}_project`,
           ),
@@ -494,7 +494,7 @@ describe('MemoryTool', () => {
       if (result && result.type === 'edit') {
         // Simulate the onConfirm callback with different outcomes
         await result.onConfirm(ToolConfirmationOutcome.ProceedOnce);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         const allowlist = (invocation.constructor as any).allowlist;
         expect(allowlist.has(`${memoryFilePath}_global`)).toBe(false);
 

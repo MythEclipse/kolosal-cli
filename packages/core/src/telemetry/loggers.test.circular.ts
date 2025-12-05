@@ -32,7 +32,7 @@ describe('Circular Reference Handling', () => {
     } as unknown as Config;
 
     // Create an object with circular references (similar to HttpsProxyAgent)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const circularObject: any = {
       sockets: {},
       agent: null,

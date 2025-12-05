@@ -135,7 +135,7 @@ export function OAuthDeviceFlow({
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array - run only once on mount
+  }, [onSuccess]); // Empty dependency array - run only once on mount
 
   if (state === 'requesting') {
     return (
@@ -256,7 +256,7 @@ export function OAuthDeviceFlow({
         {errorMessage.includes('not yet available') && (
           <Box marginTop={1}>
             <Text color={Colors.Gray}>
-              Tip: You can use the "Use OpenAI Compatible API" option to connect with an API key instead.
+              Tip: You can use the &quot;Use OpenAI Compatible API&quot; option to connect with an API key instead.
             </Text>
           </Box>
         )}

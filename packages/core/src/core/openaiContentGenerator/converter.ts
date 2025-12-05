@@ -379,7 +379,7 @@ export class OpenAIContentConverter {
 
     // Handle model messages with function calls
     if (content.role === 'model' && parsedParts.functionCalls.length > 0) {
-      const toolCalls = parsedParts.functionCalls.map((fc, index) => ({
+      const toolCalls = parsedParts.functionCalls.map((fc, _index) => ({
         id: this.assignToolCallId(fc.id),
         type: 'function' as const,
         function: {

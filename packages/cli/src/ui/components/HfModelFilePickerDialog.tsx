@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { Colors } from '../colors.js';
 import {
@@ -30,7 +31,7 @@ interface HfModelFilePickerDialogProps {
   token?: string;
   onSelect: (file: GroupedFile) => void | Promise<void>;
   onBack: () => void;
-  onCancel: () => void;
+  _onCancel: () => void;
   downloadsByFilename?: Record<string, DownloadDisplayState>;
 }
 
@@ -39,7 +40,7 @@ export const HfModelFilePickerDialog: React.FC<HfModelFilePickerDialogProps> = (
   token, 
   onSelect, 
   onBack,
-  onCancel,
+  _onCancel,
   downloadsByFilename = {},
 }) => {
   const [files, setFiles] = useState<GroupedFile[]>([]);
@@ -109,7 +110,6 @@ export const HfModelFilePickerDialog: React.FC<HfModelFilePickerDialogProps> = (
         if (!isActive) return;
         setError((e as Error).message);
       } finally {
-        if (!isActive) return;
         setLoading(false);
       }
     }

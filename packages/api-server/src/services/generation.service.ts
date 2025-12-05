@@ -55,7 +55,7 @@ export class GenerationService {
         // Check if the directory exists, create it if it doesn't
         try {
           await fs.access(resolvedWorkingDirectory);
-        } catch (error) {
+        } catch (_error) {
           console.log(`[API] Creating working directory: ${resolvedWorkingDirectory}`);
           await fs.mkdir(resolvedWorkingDirectory, { recursive: true });
         }
@@ -222,7 +222,7 @@ export class GenerationService {
     onContentChunk?: ContentStreamCallback,
     onEvent?: StreamEventCallback,
   ): Promise<GenerationResult> {
-    let allMessages: Content[] = [...conversationHistory];
+    const allMessages: Content[] = [...conversationHistory];
     
     // Add the new user message
     const userMessage: Content = {

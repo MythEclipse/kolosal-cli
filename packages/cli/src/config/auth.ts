@@ -42,9 +42,8 @@ export const setKolosalOAuthToken = (token: string): void => {
   process.env['KOLOSAL_OAUTH_TOKEN'] = token;
 };
 
-export const getKolosalOAuthToken = (): string | undefined => {
-  return process.env['KOLOSAL_OAUTH_TOKEN'];
-};
+export const getKolosalOAuthToken = (): string | undefined =>
+  process.env['KOLOSAL_OAUTH_TOKEN'];
 
 export const clearKolosalOAuthToken = (): void => {
   delete process.env['KOLOSAL_OAUTH_TOKEN'];

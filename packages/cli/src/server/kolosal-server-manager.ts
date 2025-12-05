@@ -659,7 +659,7 @@ export async function startServerIfEnabled(
   try {
     await manager.start();
     return manager;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }

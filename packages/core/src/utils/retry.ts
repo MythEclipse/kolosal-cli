@@ -84,7 +84,6 @@ export async function retryWithBackoff<T>(
 
   let attempt = 0;
   let currentDelay = initialDelayMs;
-  let consecutive429Count = 0;
 
   while (attempt < maxAttempts) {
     attempt++;
@@ -99,12 +98,13 @@ export async function retryWithBackoff<T>(
       // Check for generic quota exceeded error (but not Pro, which was handled above) - immediate fallback for OAuth users
       // Since we only support OpenAI now (no OAuth), this fallback is disabled
 
-      // Track consecutive 429 errors
-      if (errorStatus === 429) {
-        consecutive429Count++;
-      } else {
-        consecutive429Count = 0;
-      }
+      // Track consecutive 429 errors (for future OAuth fallback)
+      // Since we only support OpenAI now (no OAuth), this tracking is disabled
+      // if (errorStatus === 429) {
+      //   consecutive429Count++;
+      // } else {
+      //   consecutive429Count = 0;
+      // }
 
       // If we have persistent 429s and a fallback callback for OAuth
       // Since we only support OpenAI now (no OAuth), this fallback is disabled

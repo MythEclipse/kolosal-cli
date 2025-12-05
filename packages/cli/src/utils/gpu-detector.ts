@@ -116,7 +116,7 @@ async function detectLinuxGPUs(result: GPUDetectionResult): Promise<void> {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // nvidia-smi not available or failed
     }
   }
@@ -177,7 +177,7 @@ async function detectWindowsGPUs(result: GPUDetectionResult): Promise<void> {
           const gpu: GPUInfo = {
             vendor: detectVendorFromName(name),
             name,
-            memory: memory && memory !== '' ? `${Math.round(parseInt(memory) / 1024 / 1024)} MB` : undefined,
+            memory: memory && memory !== '' ? `${Math.round(parseInt(memory, 10) / 1024 / 1024)} MB` : undefined,
             vulkanSupported: await checkVulkanSupport(),
             dedicated: !name.toLowerCase().includes('intel') || name.toLowerCase().includes('arc')
           };
@@ -251,7 +251,7 @@ async function checkVulkanSupport(): Promise<boolean> {
     if (stdout.includes('Vulkan API Version') || stdout.includes('apiVersion')) {
       return true;
     }
-  } catch (error) {
+  } catch (_error) {
     // vulkaninfo not available
   }
 
@@ -274,7 +274,7 @@ async function checkVulkanSupport(): Promise<boolean> {
     try {
       const { stdout } = await execAsync('find /usr/local -name "*vulkan*" -o -name "*molten*" 2>/dev/null | head -1');
       return stdout.trim().length > 0;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -284,7 +284,7 @@ async function checkVulkanSupport(): Promise<boolean> {
     try {
       const { stdout } = await execAsync('where vulkan-1.dll 2>nul || echo ""');
       return stdout.trim().length > 0;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

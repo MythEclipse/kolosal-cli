@@ -10,7 +10,7 @@ import * as fsp from 'node:fs/promises';
 import * as path from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { ReadableStream as NodeReadableStream } from 'node:stream/web';
+import type { ReadableStream as NodeReadableStream } from 'node:stream/web';
 import {
   createHfRequestHeaders,
   buildModelFileUrl,

@@ -7,10 +7,10 @@
 import AjvPkg from 'ajv';
 import * as addFormats from 'ajv-formats';
 // Ajv's ESM/CJS interop: use 'any' for compatibility as recommended by Ajv docs
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const AjvClass = (AjvPkg as any).default || AjvPkg;
 const ajValidator = new AjvClass({ coerceTypes: true });
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const addFormatsFunc = (addFormats as any).default || addFormats;
 addFormatsFunc(ajValidator);
 

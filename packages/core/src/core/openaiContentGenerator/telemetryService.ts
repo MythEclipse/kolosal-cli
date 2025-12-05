@@ -81,16 +81,16 @@ export class DefaultTelemetryService implements TelemetryService {
 
     // Log API error event for UI telemetry
     const errorEvent = new ApiErrorEvent(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (error as any)?.requestID || 'unknown',
       context.model,
       errorMessage,
       context.duration,
       context.userPromptId,
       context.authType,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (error as any)?.type,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (error as any)?.code,
     );
     logApiError(this.config, errorEvent);

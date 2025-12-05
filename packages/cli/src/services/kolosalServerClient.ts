@@ -56,7 +56,7 @@ export async function registerModelWithServer(
     let responseJson: unknown;
     try {
       responseJson = responseText ? JSON.parse(responseText) : undefined;
-    } catch (error) {
+    } catch (_error) {
       responseJson = undefined;
     }
 

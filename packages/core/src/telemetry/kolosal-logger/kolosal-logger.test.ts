@@ -68,7 +68,7 @@ describe('QwenLogger', () => {
     vi.setSystemTime(new Date('2025-01-01T12:00:00.000Z'));
     mockConfig = makeFakeConfig();
     // Clear singleton instance
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (QwenLogger as any).instance = undefined;
   });
 
@@ -78,7 +78,7 @@ describe('QwenLogger', () => {
   });
 
   afterAll(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (QwenLogger as any).instance = undefined;
   });
 
@@ -205,7 +205,7 @@ describe('QwenLogger', () => {
       }
 
       // Call the private method using bracket notation
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (logger as any).requeueFailedEvents(failedEvents);
 
       // Should have logged about dropping events due to retry limit
@@ -241,7 +241,7 @@ describe('QwenLogger', () => {
         },
       ];
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (logger as any).requeueFailedEvents(failedEvents);
 
       expect(consoleSpy).toHaveBeenCalledWith(

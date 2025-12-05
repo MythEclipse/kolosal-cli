@@ -30,9 +30,7 @@ function createMockConfig(
   contentGeneratorConfig: ContentGeneratorConfig | null,
 ): Partial<Config> {
   return {
-    getContentGeneratorConfig: (): ContentGeneratorConfig | null => {
-      return contentGeneratorConfig;
-    },
+    getContentGeneratorConfig: () => contentGeneratorConfig,
   } as Partial<Config>;
 }
 

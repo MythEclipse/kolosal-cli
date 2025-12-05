@@ -408,7 +408,7 @@ async function parseGGUFParams(rr: RangeReader): Promise<GGUFParams | null> {
     }
 
     return params as GGUFParams;
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -504,7 +504,7 @@ export async function estimateMemory(
     const totalBytesWithCache = totalBytes + kvBytes;
 
     return `${humanSize(totalBytesWithCache)} (Model: ${humanSize(totalBytes)} + KV: ${humanSize(kvBytes)})`;
-  } catch (e) {
+  } catch (_e) {
     return null; // Silently fail, just don't show estimate
   }
 }

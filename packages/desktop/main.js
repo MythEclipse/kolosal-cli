@@ -1,5 +1,6 @@
+/* global document, console */
+
 import { invoke } from '@tauri-apps/api/tauri';
-import { appWindow } from '@tauri-apps/api/window';
 
 class KolosalDesktop {
   constructor() {

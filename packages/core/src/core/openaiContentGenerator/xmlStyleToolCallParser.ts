@@ -378,7 +378,7 @@ export class XmlStyleToolCallParser {
         // Try parsing the fixed string
         try {
           parsedArgs = JSON.parse(fixedArgsString);
-        } catch (secondError) {
+        } catch (_secondError) {
           throw new Error(`Failed to parse tool call arguments: ${error}`);
         }
       }
@@ -517,7 +517,7 @@ export class XmlStyleToolCallParser {
             toolCalls: [toolCall],
             textContent: combinedText || undefined
           };
-        } catch (jsonError) {
+        } catch (_jsonError) {
           // JSON parsing failed - not a valid tool call
           return null;
         }
@@ -621,7 +621,7 @@ export class XmlStyleToolCallParser {
                 }],
                 textContent: textContent || undefined
               };
-            } catch (jsonError) {
+            } catch (_jsonError) {
               // JSON parsing failed, continue looking
               continue;
             }
@@ -658,8 +658,6 @@ export class XmlStyleToolCallParser {
       // Common patterns to infer function names
       if (parsedArgs.todoList || parsedArgs.todos) {
         functionName = 'manage_todo_list';
-      } else if (parsedArgs.operation === 'write' && parsedArgs.todoList) {
-        functionName = 'manage_todo_list';
       } else if (parsedArgs.filePath || parsedArgs.file_path || parsedArgs.absolute_path) {
         functionName = 'create_file';
       } else if (parsedArgs.content && !parsedArgs.filePath && !parsedArgs.file_path) {
@@ -681,7 +679,7 @@ export class XmlStyleToolCallParser {
         }],
         textContent: textBefore.trim() || undefined
       };
-    } catch (jsonError) {
+    } catch (_jsonError) {
       // JSON parsing failed
       return null;
     }
