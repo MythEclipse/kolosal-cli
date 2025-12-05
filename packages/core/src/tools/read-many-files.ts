@@ -201,7 +201,17 @@ ${finalExclusionPatternsForDescription
     const searchPatterns = [...inputPatterns, ...include];
     try {
       const allEntries = new Set<string>();
-      const workspaceDirs = this.config.getWorkspaceContext().getDirectories();
+      const workspaceContext = this.config.getWorkspaceContext();
+      
+      if (!workspaceContext) {
+        throw new Error('Workspace context is not available');
+      }
+      
+      const workspaceDirs = workspaceContext.getDirectories();
+      
+      if (!workspaceDirs || workspaceDirs.length === 0) {
+        throw new Error('No workspace directories found');
+      }
 
       for (const dir of workspaceDirs) {
         const processedPatterns = [];
@@ -215,48 +225,69 @@ ${finalExclusionPatternsForDescription
             processedPatterns.push(normalizedP);
           }
         }
+        
+        if (processedPatterns.length === 0) {
+          continue;
+        }
 
-        const entriesInDir = await glob(processedPatterns, {
-          cwd: dir,
-          ignore: effectiveExcludes,
-          nodir: true,
-          dot: true,
-          absolute: true,
-          nocase: true,
-          signal,
-        });
-        for (const entry of entriesInDir) {
-          allEntries.add(entry);
+        try {
+          const entriesInDir = await glob(processedPatterns, {
+            cwd: dir,
+            ignore: effectiveExcludes,
+            nodir: true,
+            dot: true,
+            absolute: true,
+            nocase: true,
+            signal,
+          });
+          for (const entry of entriesInDir) {
+            allEntries.add(entry);
+          }
+        } catch (globError) {
+          console.error(`[ReadManyFiles] Error running glob in directory ${dir}:`, globError);
+          // Continue to next directory instead of failing completely
         }
       }
       const entries = Array.from(allEntries);
 
-      const gitFilteredEntries = fileFilteringOptions.respectGitIgnore
-        ? fileDiscovery
-            .filterFiles(
-              entries.map((p) => path.relative(this.config.getTargetDir(), p)),
-              {
-                respectGitIgnore: true,
-                respectGeminiIgnore: false,
-              },
-            )
-            .map((p) => path.resolve(this.config.getTargetDir(), p))
-        : entries;
+      let gitFilteredEntries = entries;
+      try {
+        gitFilteredEntries = fileFilteringOptions.respectGitIgnore
+          ? fileDiscovery
+              .filterFiles(
+                entries.map((p) => path.relative(this.config.getTargetDir(), p)),
+                {
+                  respectGitIgnore: true,
+                  respectGeminiIgnore: false,
+                },
+              )
+              .map((p) => path.resolve(this.config.getTargetDir(), p))
+          : entries;
+      } catch (filterError) {
+        console.error('[ReadManyFiles] Error filtering with gitignore:', filterError);
+        // Continue with unfiltered entries
+      }
 
       // Apply gemini ignore filtering if enabled
-      const finalFilteredEntries = fileFilteringOptions.respectGeminiIgnore
-        ? fileDiscovery
-            .filterFiles(
-              gitFilteredEntries.map((p) =>
-                path.relative(this.config.getTargetDir(), p),
-              ),
-              {
-                respectGitIgnore: false,
-                respectGeminiIgnore: true,
-              },
-            )
-            .map((p) => path.resolve(this.config.getTargetDir(), p))
-        : gitFilteredEntries;
+      let finalFilteredEntries = gitFilteredEntries;
+      try {
+        finalFilteredEntries = fileFilteringOptions.respectGeminiIgnore
+          ? fileDiscovery
+              .filterFiles(
+                gitFilteredEntries.map((p) =>
+                  path.relative(this.config.getTargetDir(), p),
+                ),
+                {
+                  respectGitIgnore: false,
+                  respectGeminiIgnore: true,
+                },
+              )
+              .map((p) => path.resolve(this.config.getTargetDir(), p))
+          : gitFilteredEntries;
+      } catch (filterError) {
+        console.error('[ReadManyFiles] Error filtering with gemini ignore:', filterError);
+        // Continue with git-filtered entries
+      }
 
       let gitIgnoredCount = 0;
       let geminiIgnoredCount = 0;

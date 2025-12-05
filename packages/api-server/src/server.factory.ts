@@ -30,6 +30,11 @@ export class ApiServerFactory {
         await router.handle(context);
       } catch (err) {
         // Last-ditch error handling
+        console.error('[API] Unhandled error in request handler:', err);
+        console.error('[API] Error stack:', (err as Error).stack);
+        console.error('[API] Request URL:', req.url);
+        console.error('[API] Request method:', req.method);
+        
         try {
           HttpUtils.sendJson(
             res,
@@ -37,7 +42,8 @@ export class ApiServerFactory {
             { error: (err as Error).message || 'Internal Server Error' },
             enableCors,
           );
-        } catch {
+        } catch (sendError) {
+          console.error('[API] Failed to send error response:', sendError);
           res.statusCode = 500;
           res.end();
         }

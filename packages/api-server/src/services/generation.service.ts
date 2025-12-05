@@ -69,7 +69,9 @@ export class GenerationService {
         // Temporarily replace the workspace context in the config
         this.config.setWorkspaceContext(tempWorkspaceContext);
       } catch (error) {
-        console.warn('[API] Failed to set working directory:', error);
+        console.error('[API] Failed to set working directory:', error);
+        console.error('[API] Working directory was:', workingDirectory);
+        console.error('[API] Error details:', (error as Error).stack);
         // Continue with the original workspace context
       }
     }
@@ -167,20 +169,48 @@ export class GenerationService {
   }
 
   private async processAtCommand(input: string, signal: AbortSignal): Promise<Part[]> {
-    const { processedQuery, shouldProceed } = await handleAtCommand({
-      query: input,
-      config: this.config,
-      addItem: (_item, _timestamp) => 0,
-      onDebugMessage: () => {},
-      messageId: Date.now(),
-      signal,
-    });
+    try {
+      // Import ToolCallStatus type for error checking
+      const { ToolCallStatus } = await import('../types/index.js');
+      
+      // Capture error details from addItem callback
+      let errorDetails: string | null = null;
+      
+      const { processedQuery, shouldProceed } = await handleAtCommand({
+        query: input,
+        config: this.config,
+        addItem: (item, _timestamp) => {
+          // Capture error details if there's an error
+          if (item.type === 'tool_group' && item.tools) {
+            for (const tool of item.tools) {
+              if (tool.status === ToolCallStatus.Error && tool.resultDisplay) {
+                errorDetails = tool.resultDisplay;
+              }
+            }
+          } else if (item.type === 'error' && typeof item.text === 'string') {
+            errorDetails = item.text;
+          }
+          return 0;
+        },
+        onDebugMessage: (msg) => console.log('[API] @-command debug:', msg),
+        messageId: Date.now(),
+        signal,
+      });
 
-    if (!shouldProceed || !processedQuery) {
-      throw new Error('Error processing @-command in input.');
+      if (!shouldProceed || !processedQuery) {
+        // Include the actual error details in the thrown error
+        const errorMessage = errorDetails 
+          ? `Error processing @-command: ${errorDetails}`
+          : 'Error processing @-command in input.';
+        throw new Error(errorMessage);
+      }
+
+      return processedQuery as Part[];
+    } catch (error) {
+      console.error('[API] Error processing @-command:', error);
+      console.error('[API] Input was:', input);
+      throw error;
     }
-
-    return processedQuery as Part[];
   }
 
   private async runGenerationLoop(

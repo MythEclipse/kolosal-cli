@@ -76,6 +76,10 @@ export class GenerateHandler implements RouteHandler {
         );
       }
     } catch (e) {
+      // Log the full error for debugging
+      console.error('[API] Error during generation:', e);
+      console.error('[API] Error stack:', (e as Error).stack);
+      
       if (stream) {
         HttpUtils.writeSse(res, 'error', JSON.stringify({ message: (e as Error).message }));
         res.end();
