@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ContextState } from '../subagents/subagent.js';
+import type { ContextState } from '../subagents/subagent.js';
 
 export enum ErrorSeverity {
   LOW = 'low',
@@ -224,7 +224,7 @@ export class ErrorRecoveryService {
       name: 'network-retry',
       description: 'Retry network operations with exponential backoff',
       applicableErrors: [ErrorCategory.NETWORK],
-      execute: async (error, context) => {
+      execute: async (_error, _context) => {
         // Implementation would include retry logic with backoff
         console.log('Implementing network retry strategy');
         return false; // Placeholder
@@ -236,7 +236,7 @@ export class ErrorRecoveryService {
       name: 'dependency-install',
       description: 'Attempt to install missing dependencies',
       applicableErrors: [ErrorCategory.DEPENDENCY],
-      execute: async (error, context) => {
+      execute: async (_error, _context) => {
         // Implementation would run package manager install
         console.log('Implementing dependency installation strategy');
         return false; // Placeholder
@@ -248,7 +248,7 @@ export class ErrorRecoveryService {
       name: 'permission-fix',
       description: 'Attempt to fix file permission issues',
       applicableErrors: [ErrorCategory.FILESYSTEM],
-      execute: async (error, context) => {
+      execute: async (_error, _context) => {
         // Implementation would check and fix permissions
         console.log('Implementing permission fix strategy');
         return false; // Placeholder

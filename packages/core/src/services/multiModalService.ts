@@ -34,7 +34,7 @@ export interface OutputContent {
   format: OutputFormat;
   title: string;
   content: string | Buffer;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   attachments?: OutputAttachment[];
 }
 
@@ -154,9 +154,9 @@ export class MultiModalService {
     data: {
       title: string;
       summary: string;
-      details: any;
+      details: unknown;
       metrics?: Record<string, number>;
-      charts?: any[];
+      charts?: unknown[];
     },
     options: OutputOptions = {}
   ): Promise<MultiModalResult> {
@@ -171,7 +171,7 @@ export class MultiModalService {
    * Generates visualization outputs
    */
   async createVisualization(
-    data: any,
+    data: unknown,
     visualizationType: 'chart' | 'graph' | 'diagram' | 'heatmap',
     options: OutputOptions = {}
   ): Promise<MultiModalResult> {
@@ -193,7 +193,7 @@ export class MultiModalService {
         content: string;
         codeBlocks?: string[];
       }>;
-      apiReference?: any;
+      apiReference?: unknown;
       examples?: string[];
     },
     options: OutputOptions = {}
@@ -248,7 +248,7 @@ export class MultiModalService {
       type: OutputType.REPORT,
       format: OutputFormat.TEXT,
       title: 'Text Report',
-      content: content,
+      content,
       metadata: options.includeMetadata ? { generatedAt: new Date().toISOString() } : undefined
     };
   }
@@ -386,29 +386,45 @@ ${content}
     return filePath;
   }
 
-  private formatReportContent(data: any): string {
+  private formatReportContent(data: unknown): string {
+    const report = data as {
+      title: string;
+      summary: string;
+      details: unknown;
+      metrics?: Record<string, number>;
+    };
     return `
-Report: ${data.title}
+Report: ${report.title}
 
 Summary:
-${data.summary}
+${report.summary}
 
 Details:
-${typeof data.details === 'object' ? JSON.stringify(data.details, null, 2) : data.details}
+${typeof report.details === 'object' ? JSON.stringify(report.details, null, 2) : report.details}
 
-${data.metrics ? `Metrics:\n${Object.entries(data.metrics).map(([k, v]) => `${k}: ${v}`).join('\n')}` : ''}
+${report.metrics ? `Metrics:\n${Object.entries(report.metrics).map(([k, v]) => `${k}: ${v}`).join('\n')}` : ''}
 `;
   }
 
-  private formatVisualizationContent(data: any, type: string): string {
+  private formatVisualizationContent(data: unknown, type: string): string {
     return `Visualization (${type}):
 ${JSON.stringify(data, null, 2)}`;
   }
 
-  private formatDocumentationContent(docs: any): string {
-    let content = `# ${docs.title}\n\n`;
+  private formatDocumentationContent(docs: unknown): string {
+    const documentation = docs as {
+      title: string;
+      sections: Array<{
+        title: string;
+        content: string;
+        codeBlocks?: string[];
+      }>;
+      apiReference?: unknown;
+      examples?: string[];
+    };
+    let content = `# ${documentation.title}\n\n`;
 
-    for (const section of docs.sections) {
+    for (const section of documentation.sections) {
       content += `## ${section.title}\n\n${section.content}\n\n`;
 
       if (section.codeBlocks) {
@@ -418,13 +434,13 @@ ${JSON.stringify(data, null, 2)}`;
       }
     }
 
-    if (docs.apiReference) {
-      content += `## API Reference\n\n\`\`\`json\n${JSON.stringify(docs.apiReference, null, 2)}\n\`\`\`\n\n`;
+    if (documentation.apiReference) {
+      content += `## API Reference\n\n\`\`\`json\n${JSON.stringify(documentation.apiReference, null, 2)}\n\`\`\`\n\n`;
     }
 
-    if (docs.examples) {
+    if (documentation.examples) {
       content += `## Examples\n\n`;
-      for (const example of docs.examples) {
+      for (const example of documentation.examples) {
         content += `\`\`\`\n${example}\n\`\`\`\n\n`;
       }
     }

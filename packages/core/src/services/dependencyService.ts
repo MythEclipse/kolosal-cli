@@ -297,18 +297,22 @@ export class DependencyService {
     const pkg = version ? `${packageName}@${version}` : packageName;
 
     switch (pm) {
-      case PackageManager.YARN:
+      case PackageManager.YARN: {
         const yarnFlag = type === DependencyType.DEV_DEPENDENCY ? '--dev' : '';
         return ['yarn', 'add', pkg, yarnFlag].filter(Boolean);
-      case PackageManager.PNPM:
+      }
+      case PackageManager.PNPM: {
         const pnpmFlag = type === DependencyType.DEV_DEPENDENCY ? '--save-dev' : '--save';
         return ['pnpm', 'add', pkg, pnpmFlag];
-      case PackageManager.BUN:
+      }
+      case PackageManager.BUN: {
         const bunFlag = type === DependencyType.DEV_DEPENDENCY ? '--dev' : '';
         return ['bun', 'add', pkg, bunFlag].filter(Boolean);
-      default:
+      }
+      default: {
         const npmFlag = type === DependencyType.DEV_DEPENDENCY ? '--save-dev' : '--save';
         return ['npm', 'install', pkg, npmFlag];
+      }
     }
   }
 
@@ -400,14 +404,22 @@ export class DependencyService {
       if (pm === PackageManager.NPM) {
         const vulnerabilities: VulnerabilityInfo[] = [];
         if (data.vulnerabilities) {
-          Object.values(data.vulnerabilities).forEach((vuln: any) => {
+          Object.values(data.vulnerabilities).forEach((vuln: unknown) => {
+            const v = vuln as {
+              severity: 'low' | 'moderate' | 'high' | 'critical';
+              title: string;
+              name: string;
+              overview?: string;
+              recommendation?: string;
+              patched_versions?: string[];
+            };
             vulnerabilities.push({
-              severity: vuln.severity,
-              title: vuln.title,
-              description: vuln.overview || vuln.recommendation || '',
-              package: vuln.name,
-              patched_versions: vuln.patched_versions || [],
-              recommendation: vuln.recommendation || 'Update to patched version'
+              severity: v.severity,
+              title: v.title,
+              description: v.overview || v.recommendation || '',
+              package: v.name,
+              patched_versions: v.patched_versions || [],
+              recommendation: v.recommendation || 'Update to patched version'
             });
           });
         }

@@ -190,17 +190,18 @@ export class ExecutionResumer {
     const savedStates = await this.persistenceService.listSavedStates();
 
     return savedStates.map(state => {
-      const metadata = state.metadata as any;
-      const totalSteps = metadata.totalSteps || 1;
-      const completedSteps = metadata.completedSteps?.length || 0;
+      const metadata = state.metadata as Record<string, unknown>;
+      const totalSteps = (metadata['totalSteps'] as number) || 1;
+      const completedStepsArray = metadata['completedSteps'] as unknown[] | undefined;
+      const completedSteps = completedStepsArray?.length || 0;
       const progress = (completedSteps / totalSteps) * 100;
 
       return {
         id: state.id,
-        planId: metadata.planId || 'unknown',
-        goal: metadata.goal || 'Unknown goal',
+        planId: String(metadata['planId'] || 'unknown'),
+        goal: String(metadata['goal'] || 'Unknown goal'),
         progress: Math.round(progress),
-        lastUpdate: new Date(metadata.lastUpdateTime || Date.now()),
+        lastUpdate: new Date((metadata['lastUpdateTime'] as number) || Date.now()),
         canResume: progress < 100
       };
     }).filter(item => item.canResume);

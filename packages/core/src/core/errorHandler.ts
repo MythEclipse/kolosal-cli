@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ErrorRecoveryService } from '../services/errorRecoveryService.js';
+import { ErrorRecoveryService, type RecoveryStrategy } from '../services/errorRecoveryService.js';
 import { RetryService, type RetryResult } from '../services/retryService.js';
 import { StatePersistenceService } from '../services/statePersistenceService.js';
 import { ContextState } from '../subagents/subagent.js';
@@ -119,7 +119,7 @@ export class ErrorHandler {
       const errorAnalysis = this.recoveryService.analyzeError(error, {
         executionStateId,
         retryAttempts: retryResult?.attempts,
-        context: context
+        context
       });
 
       console.log(`Error analysis: ${errorAnalysis.category} (${errorAnalysis.severity})`);
@@ -181,7 +181,7 @@ export class ErrorHandler {
   /**
    * Registers a custom recovery strategy
    */
-  registerRecoveryStrategy(strategy: any): void {
+  registerRecoveryStrategy(strategy: RecoveryStrategy): void {
     this.recoveryService.registerStrategy(strategy);
   }
 
@@ -189,9 +189,9 @@ export class ErrorHandler {
    * Gets error handling statistics
    */
   getErrorStats(): {
-    recoveryStats: any;
-    retryStats: any;
-    persistenceStats: any;
+    recoveryStats: unknown;
+    retryStats: unknown;
+    persistenceStats: unknown;
   } {
     return {
       recoveryStats: this.recoveryService.getRecoveryStats(),
@@ -203,24 +203,24 @@ export class ErrorHandler {
   /**
    * Creates a resumable operation wrapper
    */
-  createResumableOperation<T extends (...args: any[]) => Promise<any>>(
+  createResumableOperation<T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
     operationName: string
   ): T {
-    return ((...args: Parameters<T>) => {
-      return this.executeWithErrorHandling(
+    return ((...args: Parameters<T>) => 
+      this.executeWithErrorHandling(
         () => fn(...args),
         new ContextState(),
         { enablePersistence: true },
         operationName
-      );
-    }) as T;
+      )
+    ) as T;
   }
 
   /**
    * Resumes a previously failed operation
    */
-  async resumeOperation(stateId: string): Promise<any> {
+  async resumeOperation(stateId: string): Promise<{ resumed: boolean; state: unknown }> {
     const state = await this.persistenceService.loadState(stateId);
     if (!state) {
       throw new Error(`No saved state found for: ${stateId}`);

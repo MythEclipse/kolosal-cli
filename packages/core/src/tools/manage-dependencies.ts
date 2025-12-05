@@ -82,7 +82,7 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
       const { action, packages, packageManager, dependencyType, projectPath } = this.params;
 
       switch (action) {
-        case 'install':
+        case 'install': {
           const installResult = await this.dependencyService.installDependencies(
             projectPath,
             packageManager
@@ -93,8 +93,9 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
               : `Failed to install dependencies: ${installResult.error}`,
             returnDisplay: installResult.output
           };
+        }
 
-        case 'add':
+        case 'add': {
           if (!packages || packages.length === 0) {
             return {
               llmContent: 'No packages specified for addition',
@@ -121,8 +122,9 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
             llmContent: `Added ${successCount} packages successfully${failureCount > 0 ? `, ${failureCount} failed` : ''}`,
             returnDisplay: addResults.map((r, i) => `${packages[i]}: ${r.success ? 'OK' : r.error}`).join('\n')
           };
+        }
 
-        case 'remove':
+        case 'remove': {
           if (!packages || packages.length === 0) {
             return {
               llmContent: 'No packages specified for removal',
@@ -143,8 +145,9 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
             llmContent: `Removed ${removeSuccessCount} packages successfully${removeFailureCount > 0 ? `, ${removeFailureCount} failed` : ''}`,
             returnDisplay: removeResults.map((r, i) => `${packages[i]}: ${r.success ? 'OK' : r.error}`).join('\n')
           };
+        }
 
-        case 'update':
+        case 'update': {
           const updateResult = await this.dependencyService.updateDependencies(
             packages,
             projectPath,
@@ -156,8 +159,9 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
               : `Failed to update dependencies: ${updateResult.error}`,
             returnDisplay: updateResult.output
           };
+        }
 
-        case 'analyze':
+        case 'analyze': {
           const analysis = await this.dependencyService.analyzeDependencies(projectPath);
           const analysisSummary = `
 Dependency Analysis:
@@ -176,8 +180,9 @@ ${analysis.recommendations.map(r => `- ${r}`).join('\n')}
             llmContent: analysisSummary,
             returnDisplay: JSON.stringify(analysis, null, 2)
           };
+        }
 
-        case 'audit':
+        case 'audit': {
           const vulnerabilities = await this.dependencyService.checkVulnerabilities(
             projectPath,
             packageManager
@@ -197,12 +202,14 @@ ${vulnerabilities.map(v => `- ${v.severity.toUpperCase()}: ${v.title} (${v.packa
             llmContent: vulnSummary,
             returnDisplay: JSON.stringify(vulnerabilities, null, 2)
           };
+        }
 
-        default:
+        default: {
           return {
             llmContent: `Unknown action: ${action}`,
             returnDisplay: 'Error: Invalid action'
           };
+        }
       }
 
     } catch (error) {

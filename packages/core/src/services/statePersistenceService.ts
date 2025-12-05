@@ -8,7 +8,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { ContextState } from '../subagents/subagent.js';
+import type { ContextState } from '../subagents/subagent.js';
 import type { ExecutionPlan } from '../planning/types.js';
 
 export interface ExecutionState {
@@ -260,8 +260,8 @@ export class StatePersistenceService {
 
       // Sort by creation time (assuming ID contains timestamp)
       const sortedStates = states.sort((a, b) => {
-        const aTime = parseInt(a.id.split('_').pop() || '0');
-        const bTime = parseInt(b.id.split('_').pop() || '0');
+        const aTime = parseInt(a.id.split('_').pop() || '0', 10);
+        const bTime = parseInt(b.id.split('_').pop() || '0', 10);
         return aTime - bTime;
       });
 
@@ -327,7 +327,7 @@ export class StatePersistenceService {
     }
   }
 
-  private contextStateToObject(context: ContextState): Record<string, unknown> {
+  private contextStateToObject(_context: ContextState): Record<string, unknown> {
     const result: Record<string, unknown> = {};
     // This would need to be implemented based on ContextState's actual interface
     // For now, return empty object as placeholder

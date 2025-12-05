@@ -496,9 +496,9 @@ export class BuildService {
     const failMatch = output.match(/(\d+)\s*(?:failing|failed|fail)/i);
     const totalMatch = output.match(/(\d+)\s*(?:tests?|specs?|suites?)/i);
 
-    if (passMatch) passed = parseInt(passMatch[1]);
-    if (failMatch) failed = parseInt(failMatch[1]);
-    if (totalMatch) total = parseInt(totalMatch[1]);
+    if (passMatch) passed = parseInt(passMatch[1], 10);
+    if (failMatch) failed = parseInt(failMatch[1], 10);
+    if (totalMatch) total = parseInt(totalMatch[1], 10);
 
     // If we couldn't parse, assume all tests passed if build succeeded
     if (total === 0 && buildResult.success) {
@@ -527,9 +527,9 @@ export class BuildService {
     const warningMatch = output.match(/(\d+)\s*warnings?/i);
     const fixableMatch = output.match(/(\d+)\s*(?:fixable|auto-fixable)/i);
 
-    if (errorMatch) errorCount = parseInt(errorMatch[1]);
-    if (warningMatch) warningCount = parseInt(warningMatch[1]);
-    if (fixableMatch) fixableCount = parseInt(fixableMatch[1]);
+    if (errorMatch) errorCount = parseInt(errorMatch[1], 10);
+    if (warningMatch) warningCount = parseInt(warningMatch[1], 10);
+    if (fixableMatch) fixableCount = parseInt(fixableMatch[1], 10);
 
     return {
       success: buildResult.success && errorCount === 0,

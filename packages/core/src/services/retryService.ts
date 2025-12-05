@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ContextState } from '../subagents/subagent.js';
+import type { ContextState } from '../subagents/subagent.js';
 
 export type RetryStrategy = 'immediate' | 'linear_backoff' | 'exponential_backoff' | 'fibonacci_backoff';
 
@@ -50,8 +50,8 @@ export class RetryService {
    */
   async executeWithRetry<T>(
     operation: () => Promise<T>,
-    retryConfig: Partial<RetryConfig> = {},
-    context?: ContextState
+    retryConfig?: Partial<RetryConfig>,
+    _context?: ContextState
   ): Promise<RetryResult<T>> {
     const config = { ...this.defaultConfig, ...retryConfig };
     const startTime = Date.now();
@@ -143,13 +143,13 @@ export class RetryService {
   /**
    * Creates a retry wrapper for functions
    */
-  createRetryWrapper<T extends (...args: any[]) => Promise<any>>(
+  createRetryWrapper<T extends (...args: unknown[]) => Promise<unknown>>(
     fn: T,
-    retryConfig: Partial<RetryConfig> = {}
+    retryConfig?: Partial<RetryConfig>
   ): T {
-    return ((...args: Parameters<T>) => {
-      return this.executeWithRetry(() => fn(...args), retryConfig);
-    }) as T;
+    return ((...args: Parameters<T>) => 
+      this.executeWithRetry(() => fn(...args), retryConfig)
+    ) as T;
   }
 
   /**

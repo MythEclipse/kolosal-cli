@@ -315,9 +315,9 @@ export class ProgressTrackingService {
     const completedSteps = execution.stepsProgress.filter(s => s.status === StepStatus.COMPLETED);
     if (completedSteps.length === 0) return null;
 
-    const averageStepTime = completedSteps.reduce((sum, step) => {
-      return sum + (step.duration || 0);
-    }, 0) / completedSteps.length;
+    const averageStepTime = completedSteps.reduce((sum, step) => 
+      sum + (step.duration || 0)
+    , 0) / completedSteps.length;
 
     const remainingSteps = execution.stepsProgress.filter(s =>
       s.status === StepStatus.PENDING || s.status === StepStatus.RUNNING
@@ -369,9 +369,10 @@ export class ProgressTrackingService {
         return `${baseMessage} - ${step.error || 'Unknown error'}`;
       case StepStatus.RETRYING:
         return `${baseMessage} - Retrying...`;
-      case StepStatus.COMPLETED:
+      case StepStatus.COMPLETED: {
         const duration = step.duration ? ` in ${Math.round(step.duration / 1000)}s` : '';
         return `${baseMessage}${duration}`;
+      }
       default:
         return baseMessage;
     }

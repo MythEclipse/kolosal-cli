@@ -124,9 +124,9 @@ export class ContextAnalysisService {
       hasTests: this.hasTests(directoryStructure),
       hasLinting: this.hasLinting(packageJson),
       hasBuildScript: this.hasBuildScript(packageJson),
-      dependencies: Object.keys(packageJson.dependencies || {}),
-      devDependencies: Object.keys(packageJson.devDependencies || {}),
-      scripts: packageJson.scripts || {},
+      dependencies: Object.keys((packageJson['dependencies'] as Record<string, unknown>) || {}),
+      devDependencies: Object.keys((packageJson['devDependencies'] as Record<string, unknown>) || {}),
+      scripts: (packageJson['scripts'] as Record<string, string>) || {} as Record<string, string>,
       configFiles,
       sourceDirectories: this.findSourceDirectories(directoryStructure),
       testDirectories: this.findTestDirectories(directoryStructure),
@@ -230,7 +230,7 @@ export class ContextAnalysisService {
     return uniquePatterns.sort((a, b) => b.confidence - a.confidence);
   }
 
-  private async analyzePackageJson(projectPath: string): Promise<any> {
+  private async analyzePackageJson(projectPath: string): Promise<Record<string, unknown>> {
     try {
       const packageJsonPath = path.join(projectPath, 'package.json');
       const content = await fs.readFile(packageJsonPath, 'utf-8');
@@ -289,8 +289,8 @@ export class ContextAnalysisService {
     return configFiles;
   }
 
-  private determineProjectType(packageJson: any, structure: string[]): ProjectType {
-    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  private determineProjectType(packageJson: Record<string, unknown>, structure: string[]): ProjectType {
+    const deps = { ...(packageJson['dependencies'] as Record<string, unknown> || {}), ...(packageJson['devDependencies'] as Record<string, unknown> || {}) };
 
     // Check for monorepo
     if (structure.some(s => s.includes('packages/') || s.includes('workspaces'))) {
@@ -298,35 +298,35 @@ export class ContextAnalysisService {
     }
 
     // Check for specific frameworks
-    if (deps.next) return ProjectType.NEXTJS;
-    if (deps.nuxt) return ProjectType.NUXT;
+    if (deps['next']) return ProjectType.NEXTJS;
+    if (deps['nuxt']) return ProjectType.NUXT;
     if (deps['@angular/core']) return ProjectType.ANGULAR;
-    if (deps.vue) return ProjectType.VUE;
-    if (deps.react) return ProjectType.REACT;
+    if (deps['vue']) return ProjectType.VUE;
+    if (deps['react']) return ProjectType.REACT;
     if (deps['react-native']) return ProjectType.REACT_NATIVE;
-    if (deps.electron) return ProjectType.ELECTRON;
+    if (deps['electron']) return ProjectType.ELECTRON;
     if (deps['@nestjs/core']) return ProjectType.NESTJS;
-    if (deps.express) return ProjectType.EXPRESS;
+    if (deps['express']) return ProjectType.EXPRESS;
 
     // Check for CLI tools
-    if (packageJson.bin || structure.some(s => s.includes('bin/'))) {
+    if (packageJson['bin'] || structure.some(s => s.includes('bin/'))) {
       return ProjectType.CLI_TOOL;
     }
 
     // Check for libraries
-    if (packageJson.main || packageJson.module || packageJson.exports) {
+    if (packageJson['main'] || packageJson['module'] || packageJson['exports']) {
       return ProjectType.LIBRARY;
     }
 
     // Default to Node.js
-    if (deps.node || structure.some(s => s.includes('package.json'))) {
+    if (deps['node'] || structure.some(s => s.includes('package.json'))) {
       return ProjectType.NODEJS;
     }
 
     return ProjectType.UNKNOWN;
   }
 
-  private determineLanguage(packageJson: any, structure: string[]): Language {
+  private determineLanguage(packageJson: Record<string, unknown>, structure: string[]): Language {
     const hasTS = structure.some(s => s.endsWith('.ts') || s.endsWith('.tsx'));
     const hasJS = structure.some(s => s.endsWith('.js') || s.endsWith('.jsx'));
 
@@ -337,37 +337,37 @@ export class ContextAnalysisService {
     return Language.JAVASCRIPT; // Default
   }
 
-  private determineFrameworks(packageJson: any, structure: string[]): Framework[] {
-    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  private determineFrameworks(packageJson: Record<string, unknown>, _structure: string[]): Framework[] {
+    const deps = { ...(packageJson['dependencies'] as Record<string, unknown> || {}), ...(packageJson['devDependencies'] as Record<string, unknown> || {}) };
     const frameworks: Framework[] = [];
 
-    if (deps.express) frameworks.push(Framework.EXPRESS);
-    if (deps.fastify) frameworks.push(Framework.FASTIFY);
-    if (deps.koa) frameworks.push(Framework.KOA);
+    if (deps['express']) frameworks.push(Framework.EXPRESS);
+    if (deps['fastify']) frameworks.push(Framework.FASTIFY);
+    if (deps['koa']) frameworks.push(Framework.KOA);
     if (deps['@nestjs/core']) frameworks.push(Framework.NESTJS);
-    if (deps.react) frameworks.push(Framework.REACT);
-    if (deps.vue) frameworks.push(Framework.VUE);
+    if (deps['react']) frameworks.push(Framework.REACT);
+    if (deps['vue']) frameworks.push(Framework.VUE);
     if (deps['@angular/core']) frameworks.push(Framework.ANGULAR);
-    if (deps.svelte) frameworks.push(Framework.SVELTE);
-    if (deps.next) frameworks.push(Framework.NEXTJS);
-    if (deps.nuxt) frameworks.push(Framework.NUXT);
-    if (deps.vite) frameworks.push(Framework.VITE);
-    if (deps.webpack) frameworks.push(Framework.WEBPACK);
-    if (deps.rollup) frameworks.push(Framework.ROLLUP);
-    if (deps.esbuild) frameworks.push(Framework.ESBUILD);
+    if (deps['svelte']) frameworks.push(Framework.SVELTE);
+    if (deps['next']) frameworks.push(Framework.NEXTJS);
+    if (deps['nuxt']) frameworks.push(Framework.NUXT);
+    if (deps['vite']) frameworks.push(Framework.VITE);
+    if (deps['webpack']) frameworks.push(Framework.WEBPACK);
+    if (deps['rollup']) frameworks.push(Framework.ROLLUP);
+    if (deps['esbuild']) frameworks.push(Framework.ESBUILD);
 
     return frameworks;
   }
 
-  private determineTestingFrameworks(packageJson: any): TestingFramework[] {
-    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  private determineTestingFrameworks(packageJson: Record<string, unknown>): TestingFramework[] {
+    const deps = { ...(packageJson['dependencies'] as Record<string, unknown> || {}), ...(packageJson['devDependencies'] as Record<string, unknown> || {}) };
     const frameworks: TestingFramework[] = [];
 
-    if (deps.jest) frameworks.push(TestingFramework.JEST);
-    if (deps.vitest) frameworks.push(TestingFramework.VITEST);
-    if (deps.mocha) frameworks.push(TestingFramework.MOCHA);
-    if (deps.jasmine) frameworks.push(TestingFramework.JASMINE);
-    if (deps.cypress) frameworks.push(TestingFramework.CYPRESS);
+    if (deps['jest']) frameworks.push(TestingFramework.JEST);
+    if (deps['vitest']) frameworks.push(TestingFramework.VITEST);
+    if (deps['mocha']) frameworks.push(TestingFramework.MOCHA);
+    if (deps['jasmine']) frameworks.push(TestingFramework.JASMINE);
+    if (deps['cypress']) frameworks.push(TestingFramework.CYPRESS);
     if (deps['@playwright/test']) frameworks.push(TestingFramework.PLAYWRIGHT);
     if (deps['@testing-library/react'] || deps['@testing-library/vue']) {
       frameworks.push(TestingFramework.TESTING_LIBRARY);
@@ -396,10 +396,11 @@ export class ContextAnalysisService {
     return 'npm'; // Default
   }
 
-  private hasTypeScript(packageJson: any, structure: string[]): boolean {
-    return packageJson.devDependencies?.typescript ||
-           packageJson.devDependencies?.['@types/node'] ||
-           structure.some(s => s.endsWith('tsconfig.json'));
+  private hasTypeScript(packageJson: Record<string, unknown>, structure: string[]): boolean {
+    const devDeps = (packageJson['devDependencies'] as Record<string, unknown>) || {};
+    return !!(devDeps['typescript'] ||
+              devDeps['@types/node'] ||
+              structure.some(s => s.endsWith('tsconfig.json')));
   }
 
   private hasTests(structure: string[]): boolean {
@@ -414,14 +415,14 @@ export class ContextAnalysisService {
     );
   }
 
-  private hasLinting(packageJson: any): boolean {
-    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
-    return !!(deps.eslint || deps.tslint || deps.prettier);
+  private hasLinting(packageJson: Record<string, unknown>): boolean {
+    const deps = { ...(packageJson['dependencies'] as Record<string, unknown> || {}), ...(packageJson['devDependencies'] as Record<string, unknown> || {}) };
+    return !!(deps['eslint'] || deps['tslint'] || deps['prettier']);
   }
 
-  private hasBuildScript(packageJson: any): boolean {
-    const scripts = packageJson.scripts || {};
-    return !!(scripts.build || scripts.compile || scripts['build:prod']);
+  private hasBuildScript(packageJson: Record<string, unknown>): boolean {
+    const scripts = (packageJson['scripts'] as Record<string, string>) || {};
+    return !!(scripts['build'] || scripts['compile'] || scripts['build:prod']);
   }
 
   private findSourceDirectories(structure: string[]): string[] {

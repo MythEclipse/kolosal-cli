@@ -198,7 +198,7 @@ export class TestExecutionService {
     }
   }
 
-  private async readPackageJson(projectPath: string): Promise<any> {
+  private async readPackageJson(projectPath: string): Promise<Record<string, unknown>> {
     try {
       const packageJsonPath = path.join(projectPath, 'package.json');
       const content = await fs.readFile(packageJsonPath, 'utf-8');
@@ -230,25 +230,25 @@ export class TestExecutionService {
     return configFiles;
   }
 
-  private detectTestFramework(packageJson: any, configFiles: string[]): TestFramework {
-    const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+  private detectTestFramework(packageJson: Record<string, unknown>, configFiles: string[]): TestFramework {
+    const deps = { ...(packageJson['dependencies'] as Record<string, unknown> || {}), ...(packageJson['devDependencies'] as Record<string, unknown> || {}) };
 
-    if (deps.vitest || configFiles.some(f => f.includes('vitest'))) return TestFramework.VITEST;
-    if (deps.jest || configFiles.some(f => f.includes('jest'))) return TestFramework.JEST;
-    if (deps.mocha || configFiles.some(f => f.includes('mocha'))) return TestFramework.MOCHA;
-    if (deps.jasmine) return TestFramework.JASMINE;
-    if (deps.cypress || configFiles.some(f => f.includes('cypress'))) return TestFramework.CYPRESS;
+    if (deps['vitest'] || configFiles.some(f => f.includes('vitest'))) return TestFramework.VITEST;
+    if (deps['jest'] || configFiles.some(f => f.includes('jest'))) return TestFramework.JEST;
+    if (deps['mocha'] || configFiles.some(f => f.includes('mocha'))) return TestFramework.MOCHA;
+    if (deps['jasmine']) return TestFramework.JASMINE;
+    if (deps['cypress'] || configFiles.some(f => f.includes('cypress'))) return TestFramework.CYPRESS;
     if (deps['@playwright/test'] || configFiles.some(f => f.includes('playwright'))) return TestFramework.PLAYWRIGHT;
     if (deps['@testing-library/react'] || deps['@testing-library/vue']) return TestFramework.TESTING_LIBRARY;
 
     return TestFramework.UNKNOWN;
   }
 
-  private extractTestScripts(packageJson: any): string[] {
-    const scripts = packageJson.scripts || {};
+  private extractTestScripts(packageJson: Record<string, unknown>): string[] {
+    const scripts = (packageJson['scripts'] as Record<string, string>) || {};
     const testScripts: string[] = [];
 
-    if (scripts.test) testScripts.push('test');
+    if (scripts['test']) testScripts.push('test');
     if (scripts['test:unit']) testScripts.push('test:unit');
     if (scripts['test:integration']) testScripts.push('test:integration');
     if (scripts['test:e2e']) testScripts.push('test:e2e');
@@ -257,8 +257,8 @@ export class TestExecutionService {
     return testScripts;
   }
 
-  private hasCoverage(packageJson: any, configFiles: string[]): boolean {
-    const scripts = packageJson.scripts || {};
+  private hasCoverage(packageJson: Record<string, unknown>, configFiles: string[]): boolean {
+    const scripts = (packageJson['scripts'] as Record<string, string>) || {};
     return !!(scripts['test:coverage'] || scripts['test:cov'] ||
               configFiles.some(f => f.includes('jest') || f.includes('vitest')));
   }
@@ -423,7 +423,7 @@ export class TestExecutionService {
     };
   }
 
-  private async findTestFiles(projectPath: string, config: TestConfig): Promise<string[]> {
+  private async findTestFiles(projectPath: string, _config: TestConfig): Promise<string[]> {
     const testFiles: string[] = [];
     const extensions = ['.test.js', '.test.ts', '.test.tsx', '.spec.js', '.spec.ts', '.spec.tsx'];
 

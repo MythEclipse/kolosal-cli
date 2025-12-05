@@ -69,7 +69,7 @@ class RunBuildInvocation extends BaseToolInvocation<RunBuildParams, ToolResult> 
       const { action, projectPath, fix } = this.params;
 
       switch (action) {
-        case 'build':
+        case 'build': {
           const buildResult = await this.buildService.runBuild(projectPath);
           const buildSummary = `
 Build ${buildResult.success ? 'succeeded' : 'failed'} in ${Math.round(buildResult.duration / 1000)}s
@@ -81,8 +81,9 @@ Warnings: ${buildResult.warnings.length}
             llmContent: buildSummary,
             returnDisplay: buildResult.output || 'No output'
           };
+        }
 
-        case 'test':
+        case 'test': {
           const testResult = await this.buildService.runTests(projectPath);
           const testSummary = `
 Tests ${testResult.success ? 'passed' : 'failed'} in ${Math.round(testResult.duration / 1000)}s
@@ -96,8 +97,9 @@ ${testResult.coverage ? `Coverage: ${testResult.coverage.lines}% lines` : ''}
             llmContent: testSummary,
             returnDisplay: testResult.output || 'No test output'
           };
+        }
 
-        case 'lint':
+        case 'lint': {
           const lintResult = await this.buildService.runLint(projectPath, undefined, fix);
           const lintSummary = `
 Lint ${lintResult.success ? 'passed' : 'failed'} in ${Math.round(lintResult.duration / 1000)}s
@@ -110,8 +112,9 @@ Fixable: ${lintResult.fixableCount}
             llmContent: lintSummary,
             returnDisplay: lintResult.output || 'No lint output'
           };
+        }
 
-        case 'typecheck':
+        case 'typecheck': {
           const typeResult = await this.buildService.runTypeCheck(projectPath);
           const typeSummary = `
 Type check ${typeResult.success ? 'passed' : 'failed'} in ${Math.round(typeResult.duration / 1000)}s
@@ -123,19 +126,22 @@ Warnings: ${typeResult.warnings.length}
             llmContent: typeSummary,
             returnDisplay: typeResult.output || 'No type check output'
           };
+        }
 
-        case 'clean':
+        case 'clean': {
           const cleanResult = await this.buildService.cleanBuild(projectPath);
           return {
             llmContent: cleanResult.success ? 'Build artifacts cleaned successfully' : 'Failed to clean build artifacts',
             returnDisplay: cleanResult.output || 'No output'
           };
+        }
 
-        default:
+        default: {
           return {
             llmContent: `Unknown build action: ${action}`,
             returnDisplay: 'Error: Invalid action'
           };
+        }
       }
 
     } catch (error) {

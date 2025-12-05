@@ -7,7 +7,7 @@
  */
 
 import { RetryService, type RetryConfig, type RetryResult } from '../services/retryService.js';
-import { ContextState } from '../subagents/subagent.js';
+import type { ContextState } from '../subagents/subagent.js';
 
 export interface RetryPolicy {
   name: string;
@@ -116,7 +116,7 @@ export class RetryManager {
   async executeWithRetry<T>(
     operation: () => Promise<T>,
     policyName?: string,
-    context?: ContextState
+    _context?: ContextState
   ): Promise<RetryResult<T>> {
     const policy = this.getPolicy(policyName || this.options.defaultPolicy);
 
@@ -173,7 +173,7 @@ export class RetryManager {
       averageSuccessRate: number;
     };
   } {
-    const policyStats: Record<string, any> = {};
+    const policyStats: Record<string, { totalAttempts: number; successRate: number; circuitBreakerState: string }> = {};
     let totalRetries = 0;
     let totalSuccessRate = 0;
     let policyCount = 0;
@@ -270,8 +270,8 @@ export class RetryManager {
 
     // Check HTTP status codes if available
     if (policy.conditions.retryableStatusCodes && 'status' in error) {
-      const statusCode = (error as any).status;
-      if (policy.conditions.retryableStatusCodes.includes(statusCode)) {
+      const statusCode = (error as { status?: number }).status;
+      if (statusCode !== undefined && policy.conditions.retryableStatusCodes.includes(statusCode)) {
         return true;
       }
     }
