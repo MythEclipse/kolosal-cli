@@ -12,6 +12,7 @@ import {
   getShellConfiguration,
   isCommandAllowed,
   isCommandNeedsPermission,
+  isRestrictedDevCommand,
   stripShellWrapper,
 } from './shell-utils.js';
 import type { Config } from '../config/config.js';
@@ -451,5 +452,84 @@ describe('isCommandNeedPermission', () => {
     const result = isCommandNeedsPermission('rm -rf temp');
     expect(result.requiresPermission).toBe(true);
     expect(result.reason).toContain('requires permission to execute');
+  });
+
+  it('returns true for restricted dev commands', () => {
+    const result = isCommandNeedsPermission('npm run dev');
+    expect(result.requiresPermission).toBe(true);
+    expect(result.reason).toContain('Development server and run commands are not allowed');
+  });
+
+  it('returns true for test commands (they require permission but are not restricted)', () => {
+    const result = isCommandNeedsPermission('npm test');
+    expect(result.requiresPermission).toBe(true);
+    expect(result.reason).toContain('requires permission to execute');
+  });
+});
+
+describe('isRestrictedDevCommand', () => {
+  describe('blocked commands', () => {
+    const blockedCommands = [
+      'npm run dev',
+      'npm start',
+      'yarn dev',
+      'yarn start',
+      'pnpm dev',
+      'bun run start',
+      'npm run serve',
+      'nodemon server.js',
+      'node server.js',
+      'webpack-dev-server',
+      'vite',
+      'vite dev',
+      'next dev',
+      'nuxt dev',
+      'python manage.py runserver',
+      'flask run',
+      'rails server',
+      'php -S localhost:8000',
+      'http-server',
+      'live-server',
+    ];
+
+    blockedCommands.forEach(cmd => {
+      it(`should block: ${cmd}`, () => {
+        const result = isRestrictedDevCommand(cmd);
+        expect(result.isRestricted).toBe(true);
+        expect(result.reason).toContain('Development server and run commands are not allowed');
+      });
+    });
+  });
+
+  describe('allowed commands', () => {
+    const allowedCommands = [
+      'npm test',
+      'npm run test',
+      'npm run test:unit',
+      'npm run test:integration',
+      'npm run test:e2e',
+      'yarn test',
+      'pnpm test',
+      'bun test',
+      'jest',
+      'vitest',
+      'mocha',
+      'pytest',
+      'npm run coverage',
+      'npm run test:watch',
+      'vite build',  // build is allowed
+      'npm run build',
+      'npm install',
+      'ls -la',
+      'cat package.json',
+      'git commit -m "test"',
+    ];
+
+    allowedCommands.forEach(cmd => {
+      it(`should allow: ${cmd}`, () => {
+        const result = isRestrictedDevCommand(cmd);
+        expect(result.isRestricted).toBe(false);
+      });
+    });
   });
 });

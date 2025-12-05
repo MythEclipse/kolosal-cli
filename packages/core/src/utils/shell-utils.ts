@@ -463,6 +463,12 @@ export function isCommandAllowed(
   command: string,
   config: Config,
 ): { allowed: boolean; reason?: string } {
+  // First check if it's a restricted dev command
+  const restrictedCheck = isRestrictedDevCommand(command);
+  if (restrictedCheck.isRestricted) {
+    return { allowed: false, reason: restrictedCheck.reason };
+  }
+  
   // By not providing a sessionAllowlist, we invoke "default allow" behavior.
   const { allAllowed, blockReason } = checkCommandPermissions(command, config);
   if (allAllowed) {
@@ -471,10 +477,89 @@ export function isCommandAllowed(
   return { allowed: false, reason: blockReason };
 }
 
+/**
+ * Checks if a command is a restricted development/run command.
+ * Blocks commands like 'npm run dev', 'npm start', 'yarn dev', etc.
+ * Allows test commands like 'npm test', 'npm run test:unit', etc.
+ * @param command The command to check
+ * @returns Object indicating if blocked and the reason
+ */
+export function isRestrictedDevCommand(command: string): {
+  isRestricted: boolean;
+  reason?: string;
+} {
+  const normalizedCommand = command.toLowerCase().trim();
+  
+  // Allow test commands
+  const testPatterns = [
+    /\btest\b/,
+    /\bspec\b/,
+    /\bunit\b/,
+    /\bintegration\b/,
+    /\be2e\b/,
+    /\bvitest\b/,
+    /\bjest\b/,
+    /\bmocha\b/,
+    /\bpytest\b/,
+    /\bcoverage\b/
+  ];
+  
+  // Check if it's a test command
+  const isTestCommand = testPatterns.some(pattern => pattern.test(normalizedCommand));
+  if (isTestCommand) {
+    return { isRestricted: false };
+  }
+  
+  // Block patterns for dev/run commands
+  const restrictedPatterns = [
+    // npm/yarn/pnpm/bun patterns
+    /\b(npm|yarn|pnpm|bun)\s+(run\s+)?(dev|start|serve)\b/,
+    /\b(npm|yarn|pnpm|bun)\s+start\b/,
+    // Direct executable patterns
+    /\b(node|nodemon|ts-node)\s+.*\b(server|app|index|main)\b/,
+    /\bnodemon\b/,
+    /\bwebpack-dev-server\b/,
+    /\bvite(?!\s+build)\b/,  // Block 'vite' and 'vite dev', but allow 'vite build'
+    /\bnext\s+dev\b/,
+    /\bnuxt\s+dev\b/,
+    // Python patterns
+    /\bpython\s+.*\bmanage\.py\s+runserver\b/,
+    /\bflask\s+run\b/,
+    /\bdjango-admin\s+runserver\b/,
+    // Other web servers
+    /\bhttp-server\b/,
+    /\blive-server\b/,
+    /\bphp\s+-s\b/,  // php -S (built-in PHP web server) - lowercase because command is normalized
+    /\bruby\s+.*\bserver\b/,
+    /\brails\s+server\b/,
+  ];
+  
+  // Check if command matches any restricted pattern
+  const isRestricted = restrictedPatterns.some(pattern => pattern.test(normalizedCommand));
+  
+  if (isRestricted) {
+    return {
+      isRestricted: true,
+      reason: 'Development server and run commands are not allowed. Only test commands (npm test, npm run test:unit, etc.) are permitted for automated execution.'
+    };
+  }
+  
+  return { isRestricted: false };
+}
+
 export function isCommandNeedsPermission(command: string): {
   requiresPermission: boolean;
   reason?: string;
 } {
+  // First check if it's a restricted dev command
+  const restrictedCheck = isRestrictedDevCommand(command);
+  if (restrictedCheck.isRestricted) {
+    return {
+      requiresPermission: true,
+      reason: restrictedCheck.reason,
+    };
+  }
+  
   const isAllowed = isShellCommandReadOnly(command);
 
   if (isAllowed) {

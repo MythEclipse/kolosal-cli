@@ -362,22 +362,27 @@ Co-authored-by: ${gitCoAuthorSettings.name} <${gitCoAuthorSettings.email}>`;
 function getShellToolDescription(): string {
   const toolDescription = `
 
+      **IMPORTANT RESTRICTIONS:**
+      Development server and run commands (npm run dev, npm start, yarn dev, etc.) are NOT ALLOWED.
+      You can ONLY run test commands such as:
+      - \`npm test\`, \`npm run test:unit\`, \`npm run test:integration\`
+      - \`yarn test\`, \`pnpm test\`, \`bun test\`
+      - \`jest\`, \`vitest\`, \`mocha\`, \`pytest\`
+      - Any command containing 'test', 'spec', 'unit', 'integration', 'e2e', 'coverage'
+      
       **Background vs Foreground Execution:**
       You should decide whether commands should run in background or foreground based on their nature:
-      
-      **Use background execution (is_background: true) for:**
-      - Long-running development servers: \`npm run start\`, \`npm run dev\`, \`yarn dev\`, \`bun run start\`
-      - Build watchers: \`npm run watch\`, \`webpack --watch\`
-      - Database servers: \`mongod\`, \`mysql\`, \`redis-server\`
-      - Web servers: \`python -m http.server\`, \`php -S localhost:8000\`
-      - Any command expected to run indefinitely until manually stopped
       
       **Use foreground execution (is_background: false) for:**
       - One-time commands: \`ls\`, \`cat\`, \`grep\`
       - Build commands: \`npm run build\`, \`make\`
       - Installation commands: \`npm install\`, \`pip install\`
       - Git operations: \`git commit\`, \`git push\`
-      - Test runs: \`npm test\`, \`pytest\`
+      - Test runs: \`npm test\`, \`pytest\` (ALLOWED)
+      
+      **Use background execution (is_background: true) for:**
+      - Build watchers: \`npm run watch\`, \`webpack --watch\`
+      - Long-running test watchers: \`npm run test:watch\` (if needed)
       
       The following information is returned:
 
