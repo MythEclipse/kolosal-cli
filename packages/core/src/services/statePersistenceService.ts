@@ -8,7 +8,6 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Config } from '../config/config.js';
 import { ContextState } from '../subagents/subagent.js';
 import type { ExecutionPlan } from '../planning/types.js';
 
@@ -48,7 +47,7 @@ export class StatePersistenceService {
   private activeStates: Map<string, ExecutionState> = new Map();
   private autoSaveTimers: Map<string, NodeJS.Timeout> = new Map();
 
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Initializes the persistence service
@@ -291,7 +290,7 @@ export class StatePersistenceService {
     const failurePoints: Record<string, number> = {};
 
     for (const state of savedStates) {
-      const completionRate = state.completedSteps.length / (state.metadata.totalSteps as number || 1);
+      const completionRate = state.completedSteps.length / (state.metadata['totalSteps'] as number || 1);
       totalCompletionRate += completionRate;
 
       // Track failure points
@@ -334,5 +333,4 @@ export class StatePersistenceService {
     // For now, return empty object as placeholder
     return result;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\statePersistenceService.ts
+}

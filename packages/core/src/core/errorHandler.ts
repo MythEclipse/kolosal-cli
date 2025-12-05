@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
-import { ErrorRecoveryService, type ErrorAnalysis } from '../services/errorRecoveryService.js';
+import { ErrorRecoveryService } from '../services/errorRecoveryService.js';
 import { RetryService, type RetryResult } from '../services/retryService.js';
 import { StatePersistenceService } from '../services/statePersistenceService.js';
 import { ContextState } from '../subagents/subagent.js';
@@ -35,10 +34,10 @@ export class ErrorHandler {
   private readonly retryService: RetryService;
   private readonly persistenceService: StatePersistenceService;
 
-  constructor(private readonly config: Config) {
-    this.recoveryService = new ErrorRecoveryService(config);
-    this.retryService = new RetryService(config);
-    this.persistenceService = new StatePersistenceService(config);
+  constructor() {
+    this.recoveryService = new ErrorRecoveryService();
+    this.retryService = new RetryService();
+    this.persistenceService = new StatePersistenceService();;
   }
 
   /**
@@ -232,5 +231,4 @@ export class ErrorHandler {
     // This is a placeholder for the resume functionality
     return { resumed: true, state };
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\core\errorHandler.ts
+}

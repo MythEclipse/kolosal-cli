@@ -9,7 +9,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawn } from 'child_process';
-import type { Config } from '../config/config.js';
 
 export enum BuildSystem {
   WEBPACK = 'webpack',
@@ -82,7 +81,7 @@ export interface LintResult {
 }
 
 export class BuildService {
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Detects the build configuration of a project
@@ -133,7 +132,7 @@ export class BuildService {
     const config = buildConfig || await this.detectBuildConfig(projectPath);
 
     // Try to find build script
-    const buildScript = config.scripts.build || config.scripts['build:prod'] || config.scripts.compile;
+    const buildScript = config.scripts['build'] || config.scripts['build:prod'] || config.scripts['compile'];
 
     if (!buildScript) {
       // Try common build commands based on detected build system
@@ -166,7 +165,7 @@ export class BuildService {
     const config = buildConfig || await this.detectBuildConfig(projectPath);
 
     // Try to find test script
-    const testScript = config.scripts.test || config.scripts['test:unit'] || config.scripts['test:ci'];
+    const testScript = config.scripts['test'] || config.scripts['test:unit'] || config.scripts['test:ci'];
 
     if (!testScript) {
       // Try common test commands
@@ -202,7 +201,7 @@ export class BuildService {
     const config = buildConfig || await this.detectBuildConfig(projectPath);
 
     // Try to find lint script
-    const lintScript = config.scripts.lint || config.scripts['lint:check'] || config.scripts['lint:fix'];
+    const lintScript = config.scripts['lint'] || config.scripts['lint:check'] || config.scripts['lint:fix'];
 
     if (!lintScript) {
       // Try common lint commands
@@ -541,5 +540,4 @@ export class BuildService {
       output: buildResult.output
     };
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\buildService.ts
+}

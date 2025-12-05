@@ -69,8 +69,12 @@ class ManageDependenciesInvocation extends BaseToolInvocation<ManageDependencies
   private readonly dependencyService: DependencyService;
 
   constructor(config: Config, params: ManageDependenciesParams) {
-    super(config, params);
-    this.dependencyService = new DependencyService(config);
+    super(params);
+    this.dependencyService = new DependencyService();
+  }
+
+  getDescription(): string {
+    return `Managing dependencies: ${this.params.action}`;
   }
 
   async execute(): Promise<ToolResult> {
@@ -208,5 +212,4 @@ ${vulnerabilities.map(v => `- ${v.severity.toUpperCase()}: ${v.title} (${v.packa
       };
     }
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\tools\manage-dependencies.ts
+}

@@ -9,7 +9,6 @@
 import { spawn } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Config } from '../config/config.js';
 
 export enum TestFramework {
   JEST = 'jest',
@@ -78,7 +77,7 @@ export interface TestExecutionOptions {
 }
 
 export class TestExecutionService {
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Discovers and analyzes test configuration
@@ -282,7 +281,7 @@ export class TestExecutionService {
 
   private buildTestCommand(config: TestConfig, options: TestExecutionOptions): string {
     const { framework } = config;
-    const { type, files, pattern, coverage, watch, verbose, bail } = options;
+    const { type: _type, files, pattern, coverage, watch, verbose, bail } = options;
 
     let command = '';
 
@@ -377,7 +376,7 @@ export class TestExecutionService {
     result: { stdout: string; stderr: string; exitCode: number },
     framework: TestFramework
   ): TestResult {
-    const { stdout, stderr, exitCode } = result;
+    const { stdout, stderr, exitCode: _exitCode } = result;
     const output = stdout + stderr;
 
     // Basic parsing - in a real implementation, this would be more sophisticated

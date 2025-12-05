@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
 
 export interface PerformanceMetrics {
   executionTime: number;
@@ -61,7 +60,7 @@ export class MetricsReportingService {
   private readonly maxHistorySize = 100;
   private currentMetrics: Partial<PerformanceMetrics> = {};
 
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Records performance metrics for an execution
@@ -384,5 +383,4 @@ export class MetricsReportingService {
 
     return recommendations;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\metricsReportingService.ts
+}

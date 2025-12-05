@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
 import { ContextState } from '../subagents/subagent.js';
 
 export enum ErrorSeverity {
@@ -50,7 +49,7 @@ export class ErrorRecoveryService {
   private readonly errorHistory: ErrorAnalysis[] = [];
   private readonly maxHistorySize = 100;
 
-  constructor(private readonly config: Config) {
+  constructor() {
     this.initializeDefaultStrategies();
   }
 
@@ -145,7 +144,6 @@ export class ErrorRecoveryService {
 
   private categorizeError(error: Error): ErrorCategory {
     const message = error.message.toLowerCase();
-    const stack = error.stack?.toLowerCase() || '';
 
     if (message.includes('network') || message.includes('fetch') || message.includes('http')) {
       return ErrorCategory.NETWORK;
@@ -264,5 +262,4 @@ export class ErrorRecoveryService {
       this.errorHistory.shift();
     }
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\errorRecoveryService.ts
+}

@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
-import type { ExecutionPlan, PlanStep } from '../planning/types.js';
+import type { ExecutionPlan } from '../planning/types.js';
 
 export enum StepStatus {
   PENDING = 'pending',
@@ -70,7 +69,7 @@ export class ProgressTrackingService {
   private callbacks: ProgressCallback[] = [];
   private readonly maxHistorySize = 100;
 
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Starts tracking progress for a new execution
@@ -392,5 +391,4 @@ export class ProgressTrackingService {
       this.executions.set(id, progress);
     });
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\progressTrackingService.ts
+}

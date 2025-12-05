@@ -8,7 +8,6 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Config } from '../config/config.js';
 
 export enum ProjectType {
   NODEJS = 'nodejs',
@@ -97,7 +96,7 @@ export interface ContextAnalysisResult {
 }
 
 export class ContextAnalysisService {
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Analyzes the project context comprehensively
@@ -578,5 +577,4 @@ export class ContextAnalysisService {
     await scan(dir);
     return files;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\contextAnalysisService.ts
+}

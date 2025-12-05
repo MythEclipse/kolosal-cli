@@ -56,8 +56,12 @@ class RunBuildInvocation extends BaseToolInvocation<RunBuildParams, ToolResult> 
   private readonly buildService: BuildService;
 
   constructor(config: Config, params: RunBuildParams) {
-    super(config, params);
-    this.buildService = new BuildService(config);
+    super(params);
+    this.buildService = new BuildService();
+  }
+
+  getDescription(): string {
+    return `Running build action: ${this.params.action}`;
   }
 
   async execute(): Promise<ToolResult> {
@@ -141,5 +145,4 @@ Warnings: ${typeResult.warnings.length}
       };
     }
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\tools\run-build.ts
+}

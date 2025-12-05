@@ -6,15 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
 import { ContextState } from '../subagents/subagent.js';
 
-export enum RetryStrategy {
-  IMMEDIATE = 'immediate',
-  LINEAR_BACKOFF = 'linear_backoff',
-  EXPONENTIAL_BACKOFF = 'exponential_backoff',
-  FIBONACCI_BACKOFF = 'fibonacci_backoff'
-}
+export type RetryStrategy = 'immediate' | 'linear_backoff' | 'exponential_backoff' | 'fibonacci_backoff';
 
 export interface RetryConfig {
   maxAttempts: number;
@@ -36,7 +30,7 @@ export interface RetryResult<T> {
 export class RetryService {
   private readonly defaultConfig: RetryConfig = {
     maxAttempts: 3,
-    strategy: RetryStrategy.EXPONENTIAL_BACKOFF,
+    strategy: 'exponential_backoff',
     baseDelay: 1000,
     maxDelay: 30000,
     jitter: true,
@@ -49,7 +43,7 @@ export class RetryService {
     ]
   };
 
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Executes a function with retry logic
@@ -170,7 +164,7 @@ export class RetryService {
       recommendedConfigs: {
         network: {
           maxAttempts: 5,
-          strategy: RetryStrategy.EXPONENTIAL_BACKOFF,
+          strategy: 'exponential_backoff',
           baseDelay: 1000,
           maxDelay: 10000,
           jitter: true,
@@ -178,7 +172,7 @@ export class RetryService {
         },
         filesystem: {
           maxAttempts: 3,
-          strategy: RetryStrategy.LINEAR_BACKOFF,
+          strategy: 'linear_backoff',
           baseDelay: 500,
           maxDelay: 5000,
           jitter: false,
@@ -186,9 +180,9 @@ export class RetryService {
         },
         api: {
           maxAttempts: 3,
-          strategy: RetryStrategy.EXPONENTIAL_BACKOFF,
-          baseDelay: 2000,
-          maxDelay: 20000,
+          strategy: 'exponential_backoff',
+          baseDelay: 1000,
+          maxDelay: 10000,
           jitter: true,
           retryableErrors: ['rate limit', 'server error', 'timeout']
         }
@@ -214,19 +208,19 @@ export class RetryService {
     let delay: number;
 
     switch (config.strategy) {
-      case RetryStrategy.IMMEDIATE:
+      case 'immediate':
         delay = 0;
         break;
 
-      case RetryStrategy.LINEAR_BACKOFF:
+      case 'linear_backoff':
         delay = config.baseDelay * attempt;
         break;
 
-      case RetryStrategy.EXPONENTIAL_BACKOFF:
+      case 'exponential_backoff':
         delay = config.baseDelay * Math.pow(2, attempt - 1);
         break;
 
-      case RetryStrategy.FIBONACCI_BACKOFF:
+      case 'fibonacci_backoff':
         delay = this.fibonacci(attempt) * config.baseDelay;
         break;
 
@@ -247,7 +241,8 @@ export class RetryService {
 
   private fibonacci(n: number): number {
     if (n <= 1) return 1;
-    let prev = 1, curr = 1;
+    let prev = 1;
+    let curr = 1;
     for (let i = 2; i < n; i++) {
       const next = prev + curr;
       prev = curr;
@@ -259,5 +254,4 @@ export class RetryService {
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\retryService.ts
+}

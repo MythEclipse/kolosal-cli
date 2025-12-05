@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
 import { RetryService, type RetryConfig, type RetryResult } from '../services/retryService.js';
 import { ContextState } from '../subagents/subagent.js';
 
@@ -103,10 +102,9 @@ export class RetryManager {
   };
 
   constructor(
-    private readonly config: Config,
     options: Partial<RetryManagerOptions> = {}
   ) {
-    this.retryService = new RetryService(config);
+    this.retryService = new RetryService();
     this.options = { ...this.defaultOptions, ...options };
   }
 
@@ -180,7 +178,7 @@ export class RetryManager {
     let totalSuccessRate = 0;
     let policyCount = 0;
 
-    for (const [name, policy] of Object.entries(this.options.policies)) {
+    for (const [name, _policy] of Object.entries(this.options.policies)) {
       const circuitState = this.circuitBreakerState.get(name);
       policyStats[name] = {
         totalAttempts: 0, // Would be populated with actual metrics
@@ -319,9 +317,4 @@ export class RetryManager {
 
     this.circuitBreakerState.set(policyName, state);
   }
-
-  private resetCircuitBreaker(policyName: string): void {
-    this.circuitBreakerState.delete(policyName);
-  }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\core\retryManager.ts
+}

@@ -8,7 +8,6 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import type { Config } from '../config/config.js';
 
 export enum OutputFormat {
   TEXT = 'text',
@@ -70,7 +69,7 @@ export interface MultiModalResult {
 }
 
 export class MultiModalService {
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Generates multiple output formats from content

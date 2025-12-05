@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
-import { StatePersistenceService, type ExecutionState } from '../services/statePersistenceService.js';
+import type { StatePersistenceService, ExecutionState } from '../services/statePersistenceService.js';
 import { ContextState } from '../subagents/subagent.js';
 import type { ExecutionPlan, PlanStep } from '../planning/types.js';
 
@@ -31,7 +30,6 @@ export interface ResumeResult {
 
 export class ExecutionResumer {
   constructor(
-    private readonly config: Config,
     private readonly persistenceService: StatePersistenceService
   ) {}
 
@@ -215,7 +213,7 @@ export class ExecutionResumer {
     valid: boolean;
     issues: string[];
     recommendations: string[];
-  }>> {
+  }> {
     const result = {
       valid: true,
       issues: [] as string[],
@@ -352,11 +350,10 @@ export class ExecutionResumer {
            step.description.toLowerCase().includes('critical');
   }
 
-  private reconstructContext(savedContext: Record<string, unknown>): ContextState {
+  private reconstructContext(_savedContext: Record<string, unknown>): ContextState {
     const context = new ContextState();
     // This would need to be implemented based on how ContextState stores data
     // For now, return empty context as placeholder
     return context;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\core\executionResumer.ts
+}

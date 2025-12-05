@@ -35,11 +35,11 @@ export class Orchestrator {
   constructor(private readonly config: Config) {
     this.subagentManager = new SubagentManager(config);
     this.globalContext = new ContextState();
-    this.errorHandler = new ErrorHandler(config);
-    this.persistenceService = new StatePersistenceService(config);
-    this.contextAnalysisService = new ContextAnalysisService(config);
-    this.testExecutionService = new TestExecutionService(config);
-    this.multiModalService = new MultiModalService(config);
+    this.errorHandler = new ErrorHandler();
+    this.persistenceService = new StatePersistenceService();
+    this.contextAnalysisService = new ContextAnalysisService();
+    this.testExecutionService = new TestExecutionService();
+    this.multiModalService = new MultiModalService();
   }
 
   /**

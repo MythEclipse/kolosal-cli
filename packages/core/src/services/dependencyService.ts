@@ -9,7 +9,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { spawn } from 'child_process';
-import type { Config } from '../config/config.js';
 
 export enum PackageManager {
   NPM = 'npm',
@@ -56,7 +55,7 @@ export interface DependencyAnalysis {
 }
 
 export class DependencyService {
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Detects the package manager used in the project
@@ -448,5 +447,4 @@ export class DependencyService {
 
     return recommendations;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\dependencyService.ts
+}

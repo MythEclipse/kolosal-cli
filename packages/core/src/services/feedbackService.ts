@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { Config } from '../config/config.js';
 
 export enum FeedbackType {
   RATING = 'rating',
@@ -64,7 +63,7 @@ export class FeedbackService {
   private feedback: UserFeedback[] = [];
   private readonly maxFeedbackHistory = 1000;
 
-  constructor(private readonly config: Config) {}
+  constructor() {}
 
   /**
    * Submits user feedback
@@ -156,8 +155,8 @@ export class FeedbackService {
 
     // Calculate average rating
     const ratings = this.feedback
-      .filter(f => f.type === FeedbackType.RATING && typeof f.metadata.rating === 'number')
-      .map(f => f.metadata.rating as number);
+      .filter(f => f.type === FeedbackType.RATING && typeof f.metadata['rating'] === 'number')
+      .map(f => f.metadata['rating'] as number);
 
     const averageRating = ratings.length > 0
       ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
@@ -220,8 +219,8 @@ export class FeedbackService {
 
       const positive = dayFeedback.filter(f =>
         f.type === FeedbackType.RATING &&
-        typeof f.metadata.rating === 'number' &&
-        (f.metadata.rating as number) >= 4
+        typeof f.metadata['rating'] === 'number' &&
+        (f.metadata['rating'] as number) >= 4
       ).length;
 
       const negative = dayFeedback.filter(f =>
@@ -361,5 +360,4 @@ export class FeedbackService {
 
     return recommendations;
   }
-}</content>
-<parameter name="filePath">d:\kolosal-cli-1\packages\core\src\services\feedbackService.ts
+}
