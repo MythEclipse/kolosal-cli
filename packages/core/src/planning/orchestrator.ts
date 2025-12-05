@@ -11,6 +11,11 @@ import { SubagentManager } from '../subagents/subagent-manager.js';
 import { ContextState } from '../subagents/subagent.js';
 import type { ExecutionPlan } from './types.js';
 import { SubagentTerminateMode } from '../subagents/types.js';
+import { ErrorHandler } from '../core/errorHandler.js';
+import { StatePersistenceService } from '../services/statePersistenceService.js';
+import { ContextAnalysisService } from '../services/contextAnalysisService.js';
+import { TestExecutionService } from '../services/testExecutionService.js';
+import { MultiModalService } from '../services/multiModalService.js';
 
 /**
  * The Orchestrator is the central component responsible for taking a high-level
@@ -20,10 +25,21 @@ import { SubagentTerminateMode } from '../subagents/types.js';
 export class Orchestrator {
   private readonly subagentManager: SubagentManager;
   private readonly globalContext: ContextState;
+  private readonly errorHandler: ErrorHandler;
+  private readonly persistenceService: StatePersistenceService;
+  private readonly contextAnalysisService: ContextAnalysisService;
+  private readonly testExecutionService: TestExecutionService;
+  private readonly multiModalService: MultiModalService;
+  private currentExecutionStateId?: string;
 
   constructor(private readonly config: Config) {
     this.subagentManager = new SubagentManager(config);
     this.globalContext = new ContextState();
+    this.errorHandler = new ErrorHandler(config);
+    this.persistenceService = new StatePersistenceService(config);
+    this.contextAnalysisService = new ContextAnalysisService(config);
+    this.testExecutionService = new TestExecutionService(config);
+    this.multiModalService = new MultiModalService(config);
   }
 
   /**
@@ -35,6 +51,9 @@ export class Orchestrator {
   async executeTask(userPrompt: string): Promise<string> {
     console.log('Orchestrator received task:', userPrompt);
 
+    // Initialize error handling system
+    await this.errorHandler.initialize();
+
     // Set the initial user prompt in the global context
     this.globalContext.set('user_prompt', userPrompt);
 
@@ -42,9 +61,17 @@ export class Orchestrator {
     const plan = await this.generatePlan(userPrompt);
     console.log('Generated Plan:', JSON.stringify(plan, null, 2));
 
-    // Step 2: Execute the generated plan
+    // Create execution state for persistence and resumability
+    this.currentExecutionStateId = this.persistenceService.createExecutionState(plan, this.globalContext);
+
+    // Step 2: Execute the generated plan with error handling
     const result = await this.executePlan(plan);
     console.log('Plan execution completed. Final Result:', result);
+
+    // Clean up execution state on success
+    if (this.currentExecutionStateId) {
+      await this.persistenceService.deleteState(this.currentExecutionStateId);
+    }
 
     return result;
   }
@@ -94,6 +121,13 @@ export class Orchestrator {
    */
   private async executePlan(plan: ExecutionPlan): Promise<string> {
     console.log('Executing plan...');
+
+    // Analyze project context for intelligent execution
+    const contextAnalysis = await this.contextAnalysisService.analyzeProjectContext();
+    this.globalContext.set('project_context', contextAnalysis.projectContext);
+    this.globalContext.set('code_patterns', contextAnalysis.codePatterns);
+    console.log('Project context analyzed:', contextAnalysis.projectContext.type);
+
     if (plan.steps.length === 0) {
       console.log('Plan is empty. Returning.');
       return 'No steps to execute in the plan.';
@@ -189,9 +223,43 @@ export class Orchestrator {
 
             completedSteps.add(step.id);
             executedThisRound = true;
+
+            // Update persistence state
+            if (this.currentExecutionStateId) {
+              this.persistenceService.updateState(this.currentExecutionStateId, {
+                currentStepIndex: Array.from(completedSteps).length,
+                completedSteps: Array.from(completedSteps),
+                globalContext: this.globalContext
+              });
+            }
           } catch (error) {
             console.error(`Error executing step "${step.id} - ${step.description}":`, error);
-            throw new Error(`Execution failed at step "${step.id}": ${error instanceof Error ? error.message : String(error)}`);
+
+            // Use error handler for recovery
+            const errorResult = await this.errorHandler.executeWithErrorHandling(
+              async () => {
+                // Re-throw to let error handler manage recovery
+                throw error;
+              },
+              this.globalContext,
+              {
+                enableRetry: false, // Already in execution loop
+                enableRecovery: true,
+                enablePersistence: true,
+                persistStateOnError: true
+              },
+              this.currentExecutionStateId
+            );
+
+            if (!errorResult.success) {
+              // If recovery failed, update error history and re-throw
+              if (this.currentExecutionStateId) {
+                this.persistenceService.updateState(this.currentExecutionStateId, {
+                  error: { stepId: step.id, error: error as Error }
+                });
+              }
+              throw new Error(`Execution failed at step "${step.id}": ${error instanceof Error ? error.message : String(error)}`);
+            }
           }
         }
       }
@@ -204,6 +272,61 @@ export class Orchestrator {
       } else {
         roundsWithoutProgress = 0; // Reset counter if progress was made
       }
+    }
+
+    // Run tests if available and generate quality report
+    try {
+      const testDiscovery = await this.testExecutionService.discoverTests();
+      if (testDiscovery.testFiles.length > 0) {
+        console.log(`Running tests: ${testDiscovery.testFiles.length} files discovered`);
+        const testResult = await this.testExecutionService.runTestsWithCoverage();
+        this.globalContext.set('test_results', testResult);
+
+        // Generate test report
+        const testReport = await this.multiModalService.createComprehensiveReport({
+          title: 'Test Execution Report',
+          summary: `Tests completed: ${testResult.passed} passed, ${testResult.failed} failed, ${testResult.total} total`,
+          details: testResult,
+          metrics: {
+            passRate: testResult.total > 0 ? (testResult.passed / testResult.total) * 100 : 0,
+            executionTime: testResult.duration,
+            coverage: testResult.coverage?.statements || 0
+          }
+        });
+        this.globalContext.set('test_report', testReport);
+      }
+    } catch (error) {
+      console.warn('Test execution failed:', error);
+    }
+
+    // Generate comprehensive output report
+    try {
+      const executionSummary = {
+        planId: plan.plan_id,
+        goal: plan.goal,
+        stepsCompleted: completedSteps.size,
+        totalSteps: plan.steps.length,
+        executionTime: Date.now() - (this.currentExecutionStateId ? 0 : Date.now()), // Simplified execution time
+        contextAnalysis: contextAnalysis
+      };
+
+      const finalReport = await this.multiModalService.createComprehensiveReport({
+        title: 'Execution Summary Report',
+        summary: `Successfully completed ${completedSteps.size} of ${plan.steps.length} steps for: ${plan.goal}`,
+        details: executionSummary,
+        metrics: {
+          completionRate: (completedSteps.size / plan.steps.length) * 100,
+          stepsExecuted: completedSteps.size,
+          contextConfidence: contextAnalysis.confidence
+        }
+      });
+
+      // Save outputs to files
+      const savedFiles = await this.multiModalService.saveOutputs(finalReport);
+      console.log('Generated outputs saved to:', savedFiles);
+      this.globalContext.set('output_files', savedFiles);
+    } catch (error) {
+      console.warn('Output generation failed:', error);
     }
 
     // Return final answer or summary from context
