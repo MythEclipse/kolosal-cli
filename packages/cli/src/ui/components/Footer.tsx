@@ -30,7 +30,7 @@ interface FooterProps {
   errorCount: number;
   showErrorDetails: boolean;
   showMemoryUsage?: boolean;
-  _promptTokenCount: number;
+  promptTokenCount: number;
   nightly: boolean;
   vimMode?: string;
   isTrustedFolder?: boolean;
@@ -46,7 +46,7 @@ export const Footer: React.FC<FooterProps> = ({
   errorCount,
   showErrorDetails,
   showMemoryUsage,
-  _promptTokenCount,
+  promptTokenCount,
   nightly,
   vimMode,
   isTrustedFolder,

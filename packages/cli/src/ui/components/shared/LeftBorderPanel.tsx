@@ -33,7 +33,7 @@ export interface LeftBorderPanelProps extends Omit<BoxProps, 'children'> {
 export function LeftBorderPanel({
   children,
   accentColor = Colors.Gray,
-  _backgroundColor,
+  backgroundColor,
   borderCharacter = DEFAULT_RULE_CHARACTER,
   ruleMarginRight = 1,
   contentProps,

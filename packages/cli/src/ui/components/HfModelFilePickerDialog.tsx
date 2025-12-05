@@ -31,7 +31,7 @@ interface HfModelFilePickerDialogProps {
   token?: string;
   onSelect: (file: GroupedFile) => void | Promise<void>;
   onBack: () => void;
-  _onCancel: () => void;
+  onCancel: () => void;
   downloadsByFilename?: Record<string, DownloadDisplayState>;
 }
 
@@ -40,7 +40,7 @@ export const HfModelFilePickerDialog: React.FC<HfModelFilePickerDialogProps> = (
   token, 
   onSelect, 
   onBack,
-  _onCancel,
+  onCancel,
   downloadsByFilename = {},
 }) => {
   const [files, setFiles] = useState<GroupedFile[]>([]);
