@@ -159,7 +159,8 @@ export class BuildService {
    */
   async runTests(
     projectPath: string = process.cwd(),
-    buildConfig?: BuildConfig
+    buildConfig?: BuildConfig,
+    retries: number = 0, // New parameter for retry count
   ): Promise<TestResult> {
     const startTime = Date.now();
     const config = buildConfig || await this.detectBuildConfig(projectPath);
@@ -167,26 +168,55 @@ export class BuildService {
     // Try to find test script
     const testScript = config.scripts['test'] || config.scripts['test:unit'] || config.scripts['test:ci'];
 
-    if (!testScript) {
-      // Try common test commands
-      const command = this.getTestCommand(config.testFramework);
-      if (command) {
-        return this.parseTestResult(await this.runCommand(command, projectPath, startTime));
+    for (let i = 0; i <= retries; i++) {
+      if (i > 0) {
+        console.log(`Retrying tests (attempt ${i + 1}/${retries + 1})...`);
       }
 
-      return {
-        success: false,
-        duration: Date.now() - startTime,
-        passed: 0,
-        failed: 0,
-        total: 0,
-        output: 'No test script found'
-      };
+      let result: BuildResult;
+      if (!testScript) {
+        // Try common test commands
+        const command = this.getTestCommand(config.testFramework);
+        if (command) {
+          result = await this.runCommand(command, projectPath, startTime);
+        } else {
+          return {
+            success: false,
+            duration: Date.now() - startTime,
+            passed: 0,
+            failed: 0,
+            total: 0,
+            output: 'No test script found',
+          };
+        }
+      } else {
+        // Run the test script
+        result = await this.runCommand(['npm', 'run', testScript.split(' ')[0]], projectPath, startTime);
+      }
+
+      const testResult = this.parseTestResult(result);
+      if (testResult.success) {
+        return testResult; // Tests passed, no need to retry
+      }
+      // If tests failed and we have retries left, continue the loop
     }
 
-    // Run the test script
-    const result = await this.runCommand(['npm', 'run', testScript.split(' ')[0]], projectPath, startTime);
-    return this.parseTestResult(result);
+    // If all retries failed, return the last result
+    const finalResult = await (async () => {
+        let result: BuildResult;
+        if (!testScript) {
+            const command = this.getTestCommand(config.testFramework);
+            if (command) {
+                result = await this.runCommand(command, projectPath, startTime);
+            } else {
+                return { success: false, duration: Date.now() - startTime, passed: 0, failed: 0, total: 0, output: 'No test script found' };
+            }
+        } else {
+            result = await this.runCommand(['npm', 'run', testScript.split(' ')[0]], projectPath, startTime);
+        }
+        return this.parseTestResult(result);
+    })();
+    return finalResult;
   }
 
   /**

@@ -570,6 +570,7 @@ export enum ToolConfirmationOutcome {
 export enum Kind {
   Read = 'read',
   Edit = 'edit',
+  Create = 'create',
   Delete = 'delete',
   Move = 'move',
   Search = 'search',

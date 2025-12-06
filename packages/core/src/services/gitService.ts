@@ -105,9 +105,53 @@ export class GitService {
     });
   }
 
+  private get mainRepository(): SimpleGit {
+    return simpleGit(this.projectRoot);
+  }
+
   async getCurrentCommitHash(): Promise<string> {
     const hash = await this.shadowGitRepository.raw('rev-parse', 'HEAD');
     return hash.trim();
+  }
+
+  // Main repository operations
+  async init(): Promise<void> {
+    await this.mainRepository.init();
+  }
+
+  async status(): Promise<import('simple-git').StatusResult> {
+    return this.mainRepository.status();
+  }
+
+  async add(files: string[]): Promise<void> {
+    await this.mainRepository.add(files);
+  }
+
+  async commit(message: string): Promise<import('simple-git').CommitResult> {
+    return this.mainRepository.commit(message);
+  }
+
+  async branch(branchName?: string): Promise<import('simple-git').BranchSummary> {
+    if (branchName) {
+      await this.mainRepository.branch([branchName]);
+    }
+    return this.mainRepository.branchLocal();
+  }
+
+  async checkout(branchName: string, create: boolean = false): Promise<void> {
+    if (create) {
+      await this.mainRepository.checkoutLocalBranch(branchName);
+    } else {
+      await this.mainRepository.checkout(branchName);
+    }
+  }
+
+  async merge(branchName: string): Promise<import('simple-git').MergeResult> {
+    return this.mainRepository.merge([branchName]);
+  }
+
+  async log(maxCount: number = 10): Promise<import('simple-git').LogResult> {
+    return this.mainRepository.log({ maxCount });
   }
 
   async createFileSnapshot(message: string): Promise<string> {

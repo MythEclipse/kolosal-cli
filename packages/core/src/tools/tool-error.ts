@@ -66,4 +66,41 @@ export enum ToolErrorType {
 
   // WebSearch-specific Errors
   WEB_SEARCH_FAILED = 'web_search_failed',
+
+  // Architecture Tool Errors
+  ARCH_ERROR = 'arch_error',
+
+  // Dependency Tools Errors
+  DEPENDENCY_DETECTION_ERROR = 'dependency_detection_error',
+  CONFLICT_RESOLUTION_ERROR = 'conflict_resolution_error',
+
+  // Collaboration Tool Errors
+  COLLAB_ERROR = 'collab_error',
+
+  // Container Tool Errors
+  CONTAINER_ERROR = 'container_error',
+
+  // Deployment Tool Errors
+  DEPLOYMENT_ERROR = 'deployment_error',
+
+  // Framework Detection Errors
+  FRAMEWORK_DETECTION_ERROR = 'framework_detection_error',
+
+  // Documentation Tool Errors
+  DOC_ERROR = 'doc_error',
+
+  // Environment Tool Errors
+  ENV_ERROR = 'env_error',
+
+  // Git Tools Errors
+  GIT_ERROR = 'git_error',
+
+  // Optimization Tool Errors
+  OPTIMIZATION_ERROR = 'optimization_error',
+
+  // Build Tool Errors
+  BUILD_ERROR = 'build_error',
+
+  // Scaffold Project Tool Errors
+  PROJECT_SCAFFOLD_ERROR = 'project_scaffold_error',
 }

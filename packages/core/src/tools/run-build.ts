@@ -7,13 +7,16 @@
  */
 
 import { BaseDeclarativeTool, BaseToolInvocation, Kind, type ToolResult } from './tools.js';
+import { ToolErrorType } from './tool-error.js';
 import type { Config } from '../config/config.js';
 import { BuildService } from '../services/buildService.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 interface RunBuildParams {
   action: 'build' | 'test' | 'lint' | 'typecheck' | 'clean';
   projectPath?: string;
   fix?: boolean; // For lint action
+  retries?: number; // For test action
 }
 
 export class RunBuildTool extends BaseDeclarativeTool<RunBuildParams, ToolResult> {
@@ -40,6 +43,12 @@ export class RunBuildTool extends BaseDeclarativeTool<RunBuildParams, ToolResult
           fix: {
             type: 'boolean',
             description: 'Whether to auto-fix linting issues (only for lint action).'
+          },
+          retries: {
+            type: 'number',
+            description: 'Number of times to retry failed tests (only for test action).',
+            minimum: 0,
+            default: 0
           }
         },
         required: ['action']
@@ -55,7 +64,7 @@ export class RunBuildTool extends BaseDeclarativeTool<RunBuildParams, ToolResult
 class RunBuildInvocation extends BaseToolInvocation<RunBuildParams, ToolResult> {
   private readonly buildService: BuildService;
 
-  constructor(config: Config, params: RunBuildParams) {
+  constructor(_config: Config, params: RunBuildParams) {
     super(params);
     this.buildService = new BuildService();
   }
@@ -66,7 +75,7 @@ class RunBuildInvocation extends BaseToolInvocation<RunBuildParams, ToolResult> 
 
   async execute(): Promise<ToolResult> {
     try {
-      const { action, projectPath, fix } = this.params;
+      const { action, projectPath, fix, retries } = this.params;
 
       switch (action) {
         case 'build': {
@@ -79,12 +88,12 @@ Warnings: ${buildResult.warnings.length}
 
           return {
             llmContent: buildSummary,
-            returnDisplay: buildResult.output || 'No output'
+            returnDisplay: buildSummary
           };
         }
 
         case 'test': {
-          const testResult = await this.buildService.runTests(projectPath);
+          const testResult = await this.buildService.runTests(projectPath, undefined, retries);
           const testSummary = `
 Tests ${testResult.success ? 'passed' : 'failed'} in ${Math.round(testResult.duration / 1000)}s
 Passed: ${testResult.passed}
@@ -95,7 +104,7 @@ ${testResult.coverage ? `Coverage: ${testResult.coverage.lines}% lines` : ''}
 
           return {
             llmContent: testSummary,
-            returnDisplay: testResult.output || 'No test output'
+            returnDisplay: testSummary
           };
         }
 
@@ -110,7 +119,7 @@ Fixable: ${lintResult.fixableCount}
 
           return {
             llmContent: lintSummary,
-            returnDisplay: lintResult.output || 'No lint output'
+            returnDisplay: lintSummary
           };
         }
 
@@ -124,15 +133,15 @@ Warnings: ${typeResult.warnings.length}
 
           return {
             llmContent: typeSummary,
-            returnDisplay: typeResult.output || 'No type check output'
+            returnDisplay: typeSummary
           };
         }
 
         case 'clean': {
           const cleanResult = await this.buildService.cleanBuild(projectPath);
           return {
-            llmContent: cleanResult.success ? 'Build artifacts cleaned successfully' : 'Failed to clean build artifacts',
-            returnDisplay: cleanResult.output || 'No output'
+            llmContent: cleanResult.success ? 'Build artifacts cleaned successfully' : `Failed to clean build artifacts: ${cleanResult.output}`,
+            returnDisplay: cleanResult.output
           };
         }
 
@@ -143,11 +152,14 @@ Warnings: ${typeResult.warnings.length}
           };
         }
       }
-
     } catch (error) {
       return {
-        llmContent: `Build operation failed: ${error instanceof Error ? error.message : String(error)}`,
-        returnDisplay: 'Error occurred during build operation'
+        llmContent: `Build operation failed: ${getErrorMessage(error)}`,
+        returnDisplay: `Error occurred during build operation: ${getErrorMessage(error)}`,
+        error: {
+          message: getErrorMessage(error),
+          type: ToolErrorType.BUILD_ERROR
+        }
       };
     }
   }

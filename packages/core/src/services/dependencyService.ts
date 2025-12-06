@@ -44,6 +44,17 @@ export interface VulnerabilityInfo {
   recommendation: string;
 }
 
+export interface DependencyConflict {
+  name: string;
+  versions: Array<{
+    version: string;
+    sources: string[]; // Packages that require this version
+  }>;
+  recommendedVersion: string;
+  resolution: 'update' | 'pin' | 'manual';
+  severity: 'low' | 'medium' | 'high';
+}
+
 export interface DependencyAnalysis {
   totalDependencies: number;
   outdatedDependencies: number;
@@ -52,6 +63,7 @@ export interface DependencyAnalysis {
   unusedDependencies: string[];
   licenseIssues: Array<{ package: string; license: string; issue: string }>;
   recommendations: string[];
+  conflicts?: DependencyConflict[]; // Add conflicts field
 }
 
 export class DependencyService {
@@ -190,10 +202,315 @@ export class DependencyService {
       // Generate recommendations
       analysis.recommendations = this.generateRecommendations(analysis);
 
+      // Check for version conflicts
+      try {
+        analysis.conflicts = await this.detectVersionConflicts(projectPath, packageJson);
+      } catch (error) {
+        console.warn('Failed to detect version conflicts:', error);
+      }
+
       return analysis;
 
     } catch (error) {
       throw new Error(`Failed to analyze dependencies: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Detects version conflicts in dependencies
+   */
+  private async detectVersionConflicts(
+    projectPath: string,
+    packageJson: any
+  ): Promise<DependencyConflict[]> {
+    const conflicts: DependencyConflict[] = [];
+    
+    try {
+      // Run npm ls to get the dependency tree
+      const lsResult = await this.runPackageManagerCommand(['npm', 'ls', '--json', '--depth=3'], projectPath);
+      
+      if (lsResult.success) {
+        const dependencyTree = JSON.parse(lsResult.output);
+        const conflictMap = this.analyzeDependencyTree(dependencyTree);
+        
+        // Convert conflict map to DependencyConflict objects
+        for (const [packageName, versions] of Object.entries(conflictMap)) {
+          if (versions.size > 1) {
+            // Explicitly cast the iterator to avoid type inference issues
+            const entries = Array.from(versions.entries()) as [
+              string,
+              Set<string>,
+            ][];
+            const versionArray = entries.map(([version, sources]) => ({
+              version,
+              sources: Array.from(sources),
+            }));
+
+            // Determine recommended version (latest semver)
+            const sortedVersions = versionArray
+              .map((v) => v.version)
+              .sort((a, b) => this.compareVersions(a, b));
+            const recommendedVersion = sortedVersions[sortedVersions.length - 1];
+
+            // Determine resolution strategy
+            let resolution: 'update' | 'pin' | 'manual' = 'update';
+            let severity: 'low' | 'medium' | 'high' = 'low';
+
+            // If there's a large version gap, mark as higher severity
+            if (sortedVersions.length > 0) {
+              const first = sortedVersions[0];
+              const last = sortedVersions[sortedVersions.length - 1];
+              if (this.getVersionDifference(first, last) > 1) {
+                severity = 'high';
+                resolution = 'manual';
+              } else if (this.getVersionDifference(first, last) > 0) {
+                severity = 'medium';
+              }
+            }
+
+            conflicts.push({
+              name: packageName,
+              versions: versionArray,
+              recommendedVersion,
+              resolution,
+              severity,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Error detecting version conflicts:', error);
+    }
+    
+    return conflicts;
+  }
+
+  /**
+   * Analyzes the dependency tree to find version conflicts
+   */
+  private analyzeDependencyTree(tree: any): Map<string, Map<string, Set<string>>> {
+    const conflictMap = new Map<string, Map<string, Set<string>>>();
+    
+    const traverse = (node: any, path: string[] = []) => {
+      if (!node || !node.dependencies) return;
+      
+      for (const [depName, depInfo] of Object.entries(node.dependencies)) {
+        const info = depInfo as any;
+        if (info.version) {
+          if (!conflictMap.has(depName)) {
+            conflictMap.set(depName, new Map<string, Set<string>>());
+          }
+          
+          const versions = conflictMap.get(depName)!;
+          if (!versions.has(info.version)) {
+            versions.set(info.version, new Set<string>());
+          }
+          
+          versions.get(info.version)!.add(path.join(' > ') || 'root');
+        }
+        
+        // Traverse children
+        if (info.dependencies) {
+          traverse(info, [...path, depName]);
+        }
+      }
+    };
+    
+    traverse(tree);
+    return conflictMap;
+  }
+
+  /**
+   * Compares two semantic version strings
+   */
+  private compareVersions(a: string, b: string): number {
+    // Simple semver comparison - in a real implementation, you'd use a proper semver library
+    const aParts = a.replace(/[^\d.]/g, '').split('.').map(Number);
+    const bParts = b.replace(/[^\d.]/g, '').split('.').map(Number);
+    
+    for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+      const aPart = aParts[i] || 0;
+      const bPart = bParts[i] || 0;
+      
+      if (aPart > bPart) return 1;
+      if (aPart < bPart) return -1;
+    }
+    
+    return 0;
+  }
+
+  /**
+   * Calculates the difference between two version numbers
+   */
+  private getVersionDifference(a: string, b: string): number {
+    // Simple version difference calculation
+    const aParts = a.replace(/[^\d.]/g, '').split('.').map(Number);
+    const bParts = b.replace(/[^\d.]/g, '').split('.').map(Number);
+    
+    // Compare major versions
+    if (aParts[0] !== bParts[0]) return Math.abs(aParts[0] - bParts[0]);
+    
+    // Compare minor versions
+    if (aParts[1] !== bParts[1]) return Math.abs(aParts[1] - bParts[1]) / 10;
+    
+    // Compare patch versions
+    if (aParts[2] !== bParts[2]) return Math.abs(aParts[2] - bParts[2]) / 100;
+    
+    return 0;
+  }
+
+  /**
+   * Resolves version conflicts by updating dependencies
+   */
+  async resolveVersionConflicts(
+    projectPath: string = process.cwd(),
+    packageManager?: PackageManager
+  ): Promise<{ success: boolean; output: string; conflictsResolved: number; error?: string }> {
+    const pm = packageManager || await this.detectPackageManager(projectPath);
+    
+    try {
+      // First, analyze dependencies to find conflicts
+      const analysis = await this.analyzeDependencies(projectPath);
+      const conflicts = analysis.conflicts || [];
+      
+      if (conflicts.length === 0) {
+        return {
+          success: true,
+          output: 'No version conflicts detected',
+          conflictsResolved: 0
+        };
+      }
+      
+      let resolvedCount = 0;
+      let output = `Resolving ${conflicts.length} version conflicts:\n`;
+      
+      // Resolve each conflict based on its resolution strategy
+      for (const conflict of conflicts) {
+        output += `\n- ${conflict.name}: `;
+        
+        try {
+          switch (conflict.resolution) {
+            case 'update':
+              // Update to the recommended version
+              const updateResult = await this.updateDependencies(
+                [conflict.name],
+                projectPath,
+                pm
+              );
+              
+              if (updateResult.success) {
+                output += `Updated to ${conflict.recommendedVersion} - SUCCESS`;
+                resolvedCount++;
+              } else {
+                output += `Failed to update: ${updateResult.error || 'Unknown error'}`;
+              }
+              break;
+              
+            case 'pin':
+              // Pin to the recommended version
+              const pinResult = await this.addDependency(
+                conflict.name,
+                conflict.recommendedVersion,
+                DependencyType.DEPENDENCY,
+                projectPath,
+                pm
+              );
+              
+              if (pinResult.success) {
+                output += `Pinned to ${conflict.recommendedVersion} - SUCCESS`;
+                resolvedCount++;
+              } else {
+                output += `Failed to pin: ${pinResult.error || 'Unknown error'}`;
+              }
+              break;
+              
+            case 'manual':
+              // Recommend manual resolution
+              output += `Manual resolution recommended - Multiple major versions detected`;
+              break;
+          }
+        } catch (error) {
+          output += `Error during resolution: ${error instanceof Error ? error.message : String(error)}`;
+        }
+      }
+      
+      return {
+        success: true,
+        output,
+        conflictsResolved: resolvedCount
+      };
+      
+    } catch (error) {
+      return {
+        success: false,
+        output: '',
+        conflictsResolved: 0,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }  }
+
+  /**
+   * Auto-updates package versions to their latest compatible versions
+   */
+  async autoUpdatePackages(
+    projectPath: string = process.cwd(),
+    packageManager?: PackageManager
+  ): Promise<{ success: boolean; output: string; packagesUpdated: number; error?: string }> {
+    const pm = packageManager || await this.detectPackageManager(projectPath);
+    
+    try {
+      // Check for outdated packages
+      const outdatedResult = await this.runPackageManagerCommand(['npm', 'outdated', '--json'], projectPath);
+      
+      if (!outdatedResult.success) {
+        return {
+          success: false,
+          output: outdatedResult.output,
+          packagesUpdated: 0,
+          error: outdatedResult.error
+        };
+      }
+      
+      const outdated = JSON.parse(outdatedResult.output);
+      const packageNames = Object.keys(outdated);
+      
+      if (packageNames.length === 0) {
+        return {
+          success: true,
+          output: 'All packages are up to date',
+          packagesUpdated: 0
+        };
+      }
+      
+      // Update all outdated packages
+      const updateResult = await this.updateDependencies(
+        packageNames,
+        projectPath,
+        pm
+      );
+      
+      if (updateResult.success) {
+        return {
+          success: true,
+          output: `Updated ${packageNames.length} packages successfully`,
+          packagesUpdated: packageNames.length
+        };
+      } else {
+        return {
+          success: false,
+          output: updateResult.output,
+          packagesUpdated: 0,
+          error: updateResult.error
+        };
+      }
+      
+    } catch (error) {
+      return {
+        success: false,
+        output: '',
+        packagesUpdated: 0,
+        error: error instanceof Error ? error.message : String(error)
+      };
     }
   }
 

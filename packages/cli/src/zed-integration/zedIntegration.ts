@@ -419,7 +419,7 @@ class Session {
             title: invocation.getDescription(),
             content,
             locations: invocation.toolLocations(),
-            kind: tool.kind,
+            kind: tool.kind as any,
           },
         };
 
@@ -457,7 +457,7 @@ class Session {
           title: invocation.getDescription(),
           content: [],
           locations: invocation.toolLocations(),
-          kind: tool.kind,
+          kind: tool.kind as any,
         });
       }
 
@@ -748,7 +748,7 @@ class Session {
           title: invocation.getDescription(),
           content: [],
           locations: invocation.toolLocations(),
-          kind: readManyFilesTool.kind,
+          kind: readManyFilesTool.kind as any,
         });
 
         const result = await invocation.execute(abortSignal);
