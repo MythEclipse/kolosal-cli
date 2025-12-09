@@ -113,7 +113,7 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
             {'  '}- {part}
           </Text>
         ))}
-        {promptTokenCount && model && (
+        {promptTokenCount !== undefined && model && (
           <Box marginLeft={2} marginTop={1}>
             <ContextUsageDisplay 
               promptTokenCount={promptTokenCount} 
@@ -129,11 +129,11 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     <Box flexDirection="column">
       <Box>
         <Text color={Colors.Gray}>Using: {summaryParts.join(' | ')}</Text>
-        {promptTokenCount && model && summaryParts.length > 0 && (
+        {promptTokenCount !== undefined && model && summaryParts.length > 0 && (
           <Text color={Colors.Gray}> | </Text>
         )}
       </Box>
-      {promptTokenCount && model && (
+      {promptTokenCount !== undefined && model && (
         <Box marginLeft={2}>
           <ContextUsageDisplay 
             promptTokenCount={promptTokenCount} 

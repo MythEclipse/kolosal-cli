@@ -42,8 +42,8 @@ export const ContextUsageDisplay = ({
   
   const progressBar = (
     <Text>
-      [<Text color={color}>{'█'.repeat(filledBlocks)}</Text>
-      <Text color={Colors.Gray}>{'░'.repeat(emptyBlocks)}</Text>]
+      [<Text color={color}>{filledBlocks > 0 ? '█'.repeat(filledBlocks) : ''}</Text>
+      <Text color={Colors.Gray}>{emptyBlocks > 0 ? '░'.repeat(emptyBlocks) : ''}</Text>]
     </Text>
   );
 
