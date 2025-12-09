@@ -20,7 +20,6 @@ import type { Config } from '../config/config.js';
 import { ApprovalMode } from '../config/config.js';
 import * as Diff from 'diff';
 import { DEFAULT_DIFF_OPTIONS, getDiffStat } from './diffOptions.js';
-import { ReadFileTool } from './read-file.js';
 import { ToolNames } from './tool-names.js';
 import { applyReplacement } from './edit.js';
 import { IDEConnectionStatus } from '../ide/ide-client.js';
@@ -334,7 +333,7 @@ export class BatchEditTool extends BaseDeclarativeTool<
     );
   }
 
-  protected validateToolParamValues(params: BatchEditParams): string | null {
+  protected override validateToolParamValues(params: BatchEditParams): string | null {
     if (!params.file_path) return "file_path is required";
     if (!path.isAbsolute(params.file_path)) return "file_path must be absolute";
     if (!params.edits || params.edits.length === 0)

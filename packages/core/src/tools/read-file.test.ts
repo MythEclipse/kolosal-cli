@@ -466,6 +466,7 @@ describe('ReadFileTool', () => {
         // Since we can't easily mock imported functions in this test setup without strict dependency injection or extensive mocking,
         // let's verify it doesn't crash and returns valid result structure.
         const result = await invocation.execute(abortSignal);
+        expect(result).toBeDefined();
         // lines 1-2 and 4-5 of "content" (1 line) -> should be just line 1?
         // Let's write more lines
         await fsp.writeFile(allowedFilePath, '1\n2\n3\n4\n5\n6', 'utf-8');
