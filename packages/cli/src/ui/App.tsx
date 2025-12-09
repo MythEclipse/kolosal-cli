@@ -3340,6 +3340,8 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
                       mcpServers={config.getMcpServers()}
                       blockedMcpServers={config.getBlockedMcpServers()}
                       showToolDescriptions={showToolDescriptions}
+                      promptTokenCount={sessionStats.lastPromptTokenCount}
+                      model={currentModel}
                     />
                   )}
                 </Box>

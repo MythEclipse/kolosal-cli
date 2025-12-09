@@ -32,19 +32,24 @@ describe('<ContextSummaryDisplay />', () => {
     showToolDescriptions: false,
     ideContext: {
       workspaceState: {
-        openFiles: [{ path: '/a/b/c' }],
+        openFiles: [{ path: '/a/b/c', timestamp: 123 }],
       },
     },
+    promptTokenCount: 100000,
+    model: 'gemini-1.5-flash',
   };
 
   it('should render on a single line on a wide screen', () => {
     const { lastFrame } = renderWithWidth(120, baseProps);
     const output = lastFrame();
     expect(output).toContain(
-      'Using: 1 open file (ctrl+g to view) | 1 KOLOSAL.md file | 1 MCP server (ctrl+t to view)',
+      'Using: 1 open file (ctrl+g to view) | 1 KOLOSAL.md file | 1 MCP server (ctrl+t to view) | 100.000 /',
     );
-    // Check for absence of newlines
-    expect(output.includes('\n')).toBe(false);
+    expect(output).toContain(
+      '1.048.576 tokens (90% left)',
+    );
+    // Check for presence of newlines due to wrapping
+    expect(output.includes('\n')).toBe(true);
   });
 
   it('should render on multiple lines on a narrow screen', () => {
@@ -55,20 +60,21 @@ describe('<ContextSummaryDisplay />', () => {
       '  - 1 open file (ctrl+g to view)',
       '  - 1 KOLOSAL.md file',
       '  - 1 MCP server (ctrl+t to view)',
+      '  - 100.000 / 1.048.576 tokens (90% left)',
     ];
     const actualLines = output.split('\n');
     expect(actualLines).toEqual(expectedLines);
   });
 
   it('should switch layout at the 80-column breakpoint', () => {
-    // At 80 columns, should be on one line
+    // At 80 columns, should be on multiple lines due to length
     const { lastFrame: wideFrame } = renderWithWidth(80, baseProps);
-    expect(wideFrame().includes('\n')).toBe(false);
+    expect(wideFrame().includes('\n')).toBe(true);
 
     // At 79 columns, should be on multiple lines
     const { lastFrame: narrowFrame } = renderWithWidth(79, baseProps);
     expect(narrowFrame().includes('\n')).toBe(true);
-    expect(narrowFrame().split('\n').length).toBe(4);
+    expect(narrowFrame().split('\n').length).toBe(5);
   });
 
   it('should not render empty parts', () => {
@@ -78,7 +84,7 @@ describe('<ContextSummaryDisplay />', () => {
       mcpServers: {},
     };
     const { lastFrame } = renderWithWidth(60, props);
-    const expectedLines = ['Using:', '  - 1 open file (ctrl+g to view)'];
+    const expectedLines = ['Using:', '  - 1 open file (ctrl+g to view)', '  - 100.000 / 1.048.576 tokens (90% left)'];
     const actualLines = lastFrame().split('\n');
     expect(actualLines).toEqual(expectedLines);
   });

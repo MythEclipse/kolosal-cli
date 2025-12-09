@@ -615,7 +615,7 @@ export const InputPrompt: React.FC<InputPromptProps> = ({
       }
     }
 
-    const linesToWrap = [];
+    const linesToWrap: string[] = [];
     if (remainingFirstLine) {
       linesToWrap.push(remainingFirstLine);
     }

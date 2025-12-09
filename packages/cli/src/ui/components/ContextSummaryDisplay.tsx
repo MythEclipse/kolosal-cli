@@ -10,6 +10,7 @@ import { Colors } from '../colors.js';
 import {
   type IdeContext,
   type MCPServerConfig,
+  tokenLimit,
 } from '@kolosal-ai/kolosal-ai-core';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
@@ -21,6 +22,8 @@ interface ContextSummaryDisplayProps {
   blockedMcpServers?: Array<{ name: string; extensionName: string }>;
   showToolDescriptions?: boolean;
   ideContext?: IdeContext;
+  promptTokenCount?: number;
+  model?: string;
 }
 
 export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
@@ -30,6 +33,8 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
   blockedMcpServers,
   showToolDescriptions,
   ideContext,
+  promptTokenCount,
+  model,
 }) => {
   const { columns: terminalWidth } = useTerminalSize();
   const isNarrow = isNarrowWidth(terminalWidth);
@@ -71,7 +76,7 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
       return '';
     }
 
-    const parts = [];
+    const parts: string[] = [];
     if (mcpServerCount > 0) {
       parts.push(
         `${mcpServerCount} MCP server${mcpServerCount > 1 ? 's' : ''}`,
@@ -97,7 +102,16 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     return text;
   })();
 
-  const summaryParts = [openFilesText, geminiMdText, mcpText].filter(Boolean);
+  const tokenText = (() => {
+    if (!promptTokenCount || !model) {
+      return '';
+    }
+    const limit = tokenLimit(model);
+    const percentage = promptTokenCount / limit;
+    return `${promptTokenCount.toLocaleString()} / ${limit.toLocaleString()} tokens (${((1 - percentage) * 100).toFixed(0)}% left)`;
+  })();
+
+  const summaryParts = [openFilesText, geminiMdText, mcpText, tokenText].filter(Boolean);
 
   if (isNarrow) {
     return (

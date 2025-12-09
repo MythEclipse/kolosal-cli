@@ -15,11 +15,13 @@ export const ContextUsageDisplay = ({
   promptTokenCount: number;
   model: string;
 }) => {
-  const percentage = promptTokenCount / tokenLimit(model);
+  const limit = tokenLimit(model);
+  const percentage = promptTokenCount / limit;
 
   return (
     <Text color={Colors.Gray}>
-      ({((1 - percentage) * 100).toFixed(0)}% context left)
+      ({promptTokenCount.toLocaleString()} / {limit.toLocaleString()} tokens,{' '}
+      {((1 - percentage) * 100).toFixed(0)}% context left)
     </Text>
   );
 };
