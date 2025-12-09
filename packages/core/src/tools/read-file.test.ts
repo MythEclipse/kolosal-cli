@@ -448,6 +448,32 @@ describe('ReadFileTool', () => {
         const invocation = tool.build(params);
         expect(typeof invocation).not.toBe('string');
       });
+
+      it('should parse ranges parameter correctly', async () => {
+        const allowedFilePath = path.join(tempRootDir, 'allowed.txt');
+        await fsp.writeFile(allowedFilePath, 'content', 'utf-8');
+        const params: ReadFileToolParams = {
+          absolute_path: allowedFilePath,
+          ranges: '1-2, 4-5',
+        };
+        const invocation = tool.build(params);
+        expect(typeof invocation).not.toBe('string');
+        
+        // Check execute call args if possible, but processSingleFileContent is imported.
+        // We can verify functionality by checking output if we mock file content
+        // Or just rely on integration/unit test of fileUtils.
+        
+        // Since we can't easily mock imported functions in this test setup without strict dependency injection or extensive mocking,
+        // let's verify it doesn't crash and returns valid result structure.
+        const result = await invocation.execute(abortSignal);
+        // lines 1-2 and 4-5 of "content" (1 line) -> should be just line 1?
+        // Let's write more lines
+        await fsp.writeFile(allowedFilePath, '1\n2\n3\n4\n5\n6', 'utf-8');
+        const result2 = await invocation.execute(abortSignal);
+        expect(result2.llmContent).toContain('1\n2');
+        expect(result2.llmContent).toContain('4\n5');
+        expect(result2.llmContent).toContain('... [Skipped lines] ...');
+      });
     });
   });
 });

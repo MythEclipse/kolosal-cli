@@ -897,6 +897,24 @@ export class GeminiClient {
     }
 
     const model = this.config.getModel();
+    const contextPercentageThreshold =
+      this.config.getChatCompression()?.contextPercentageThreshold;
+    const threshold = contextPercentageThreshold ?? COMPRESSION_TOKEN_THRESHOLD;
+    const limit = tokenLimit(model);
+
+    // Heuristic check to avoid expensive countTokens call
+    if (!force) {
+      // Estimate 1 token ~= 3.5 chars (conservative)
+      const estimatedTokens =
+        JSON.stringify(curatedHistory).length / 3.5;
+      if (estimatedTokens < limit * threshold * 0.8) {
+        return {
+          originalTokenCount: Math.round(estimatedTokens),
+          newTokenCount: Math.round(estimatedTokens),
+          compressionStatus: CompressionStatus.NOOP,
+        };
+      }
+    }
 
     const { totalTokens: originalTokenCount } =
       await this.getContentGenerator().countTokens({
@@ -914,14 +932,9 @@ export class GeminiClient {
       };
     }
 
-    const contextPercentageThreshold =
-      this.config.getChatCompression()?.contextPercentageThreshold;
-
     // Don't compress if not forced and we are under the limit.
     if (!force) {
-      const threshold =
-        contextPercentageThreshold ?? COMPRESSION_TOKEN_THRESHOLD;
-      if (originalTokenCount < threshold * tokenLimit(model)) {
+      if (originalTokenCount < threshold * limit) {
         return {
           originalTokenCount,
           newTokenCount: originalTokenCount,
@@ -943,34 +956,56 @@ export class GeminiClient {
       compressBeforeIndex++;
     }
 
-    const historyToCompress = curatedHistory.slice(0, compressBeforeIndex);
-    const historyToKeep = curatedHistory.slice(compressBeforeIndex);
+    // Ensure we don't prune the initial environment context (indices 0 and 1)
+    // if the split point is too early (unlikely given thresholds, but safe to check)
+    if (compressBeforeIndex < 2) {
+      compressBeforeIndex = 2;
+    }
 
-    this.getChat().setHistory(historyToCompress);
+    const pruningType =
+      this.config.getChatCompression()?.pruningType || 'summarize';
 
-    const { text: summary } = await this.getChat().sendMessage(
-      {
-        message: {
-          text: 'First, reason in your scratchpad. Then, generate the <state_snapshot>.',
+    let chat: GeminiChat;
+
+    if (pruningType === 'prune') {
+      // Hard pruning: Keep initial context + recent history
+      const initialContext = curatedHistory.slice(0, 2);
+      const recentHistory = curatedHistory.slice(compressBeforeIndex);
+      const prunedHistory = [...initialContext, ...recentHistory];
+
+      chat = await this.startChat(prunedHistory.slice(2)); // startChat adds the first 2
+    } else {
+      // Summarization strategy
+      const historyToCompress = curatedHistory.slice(0, compressBeforeIndex);
+      const historyToKeep = curatedHistory.slice(compressBeforeIndex);
+
+      this.getChat().setHistory(historyToCompress);
+
+      const { text: summary } = await this.getChat().sendMessage(
+        {
+          message: {
+            text: 'First, reason in your scratchpad. Then, generate the <state_snapshot>.',
+          },
+          config: {
+            systemInstruction: { text: getCompressionPrompt() },
+            maxOutputTokens: originalTokenCount,
+          },
         },
-        config: {
-          systemInstruction: { text: getCompressionPrompt() },
-          maxOutputTokens: originalTokenCount,
+        prompt_id,
+      );
+      chat = await this.startChat([
+        {
+          role: 'user',
+          parts: [{ text: summary }],
         },
-      },
-      prompt_id,
-    );
-    const chat = await this.startChat([
-      {
-        role: 'user',
-        parts: [{ text: summary }],
-      },
-      {
-        role: 'model',
-        parts: [{ text: 'Got it. Thanks for the additional context!' }],
-      },
-      ...historyToKeep,
-    ]);
+        {
+          role: 'model',
+          parts: [{ text: 'Got it. Thanks for the additional context!' }],
+        },
+        ...historyToKeep,
+      ]);
+    }
+    
     this.forceFullIdeContext = true;
 
     const { totalTokens: newTokenCount } =

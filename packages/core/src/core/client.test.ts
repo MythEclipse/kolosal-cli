@@ -596,8 +596,8 @@ describe('Gemini Client (client.ts)', () => {
 
     function setup({
       chatHistory = [
-        { role: 'user', parts: [{ text: 'Long conversation' }] },
-        { role: 'model', parts: [{ text: 'Long response' }] },
+        { role: 'user', parts: [{ text: 'Long conversation'.repeat(200) }] },
+        { role: 'model', parts: [{ text: 'Long response'.repeat(200) }] },
       ] as Content[],
     } = {}) {
       const mockChat: Partial<GeminiChat> = {
@@ -664,9 +664,15 @@ describe('Gemini Client (client.ts)', () => {
         });
 
         const originalHistory: Content[] = [
-          { role: 'user', parts: [{ text: 'what is your wisdom?' }] },
-          { role: 'model', parts: [{ text: 'some wisdom' }] },
-          { role: 'user', parts: [{ text: 'ahh that is a good a wisdom' }] },
+          {
+            role: 'user',
+            parts: [{ text: 'what is your wisdom?'.repeat(100) }],
+          },
+          { role: 'model', parts: [{ text: 'some wisdom'.repeat(100) }] },
+          {
+            role: 'user',
+            parts: [{ text: 'ahh that is a good a wisdom'.repeat(100) }],
+          },
         ];
 
         const { client } = setup({
@@ -706,7 +712,7 @@ describe('Gemini Client (client.ts)', () => {
       });
 
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history...' }] },
+        { role: 'user', parts: [{ text: '...history...'.repeat(500) }] },
       ]);
 
       // Mock the summary response from the chat
@@ -731,7 +737,7 @@ describe('Gemini Client (client.ts)', () => {
       const MOCKED_TOKEN_LIMIT = 1000;
       vi.mocked(tokenLimit).mockReturnValue(MOCKED_TOKEN_LIMIT);
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history...' }] },
+        { role: 'user', parts: [{ text: '...history...'.repeat(500) }] },
       ]);
 
       mockCountTokens.mockResolvedValue({
@@ -761,7 +767,7 @@ describe('Gemini Client (client.ts)', () => {
         contextPercentageThreshold: MOCKED_CONTEXT_PERCENTAGE_THRESHOLD,
       });
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history...' }] },
+        { role: 'user', parts: [{ text: '...history...'.repeat(500) }] },
       ]);
 
       const originalTokenCount =
@@ -796,7 +802,7 @@ describe('Gemini Client (client.ts)', () => {
         contextPercentageThreshold: MOCKED_CONTEXT_PERCENTAGE_THRESHOLD,
       });
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history...' }] },
+        { role: 'user', parts: [{ text: '...history...'.repeat(500) }] },
       ]);
 
       const originalTokenCount =
@@ -835,22 +841,22 @@ describe('Gemini Client (client.ts)', () => {
       const MOCKED_TOKEN_LIMIT = 1000;
       vi.mocked(tokenLimit).mockReturnValue(MOCKED_TOKEN_LIMIT);
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history 1...' }] },
-        { role: 'model', parts: [{ text: '...history 2...' }] },
-        { role: 'user', parts: [{ text: '...history 3...' }] },
-        { role: 'model', parts: [{ text: '...history 4...' }] },
-        { role: 'user', parts: [{ text: '...history 5...' }] },
-        { role: 'model', parts: [{ text: '...history 6...' }] },
-        { role: 'user', parts: [{ text: '...history 7...' }] },
-        { role: 'model', parts: [{ text: '...history 8...' }] },
+        { role: 'user', parts: [{ text: '...history 1...'.repeat(50) }] },
+        { role: 'model', parts: [{ text: '...history 2...'.repeat(50) }] },
+        { role: 'user', parts: [{ text: '...history 3...'.repeat(50) }] },
+        { role: 'model', parts: [{ text: '...history 4...'.repeat(50) }] },
+        { role: 'user', parts: [{ text: '...history 5...'.repeat(50) }] },
+        { role: 'model', parts: [{ text: '...history 6...'.repeat(50) }] },
+        { role: 'user', parts: [{ text: '...history 7...'.repeat(50) }] },
+        { role: 'model', parts: [{ text: '...history 8...'.repeat(50) }] },
         // Normally we would break here, but we have a function response.
         {
           role: 'user',
           parts: [{ functionResponse: { name: '...history 8...' } }],
         },
-        { role: 'model', parts: [{ text: '...history 10...' }] },
+        { role: 'model', parts: [{ text: '...history 10...'.repeat(50) }] },
         // Instead we will break here.
-        { role: 'user', parts: [{ text: '...history 10...' }] },
+        { role: 'user', parts: [{ text: '...history 10...'.repeat(50) }] },
       ]);
 
       const originalTokenCount = 1000 * 0.7;
@@ -892,7 +898,7 @@ describe('Gemini Client (client.ts)', () => {
 
     it('should always trigger summarization when force is true, regardless of token count', async () => {
       mockGetHistory.mockReturnValue([
-        { role: 'user', parts: [{ text: '...history...' }] },
+        { role: 'user', parts: [{ text: '...history...'.repeat(500) }] },
       ]);
 
       const originalTokenCount = 10; // Well below threshold

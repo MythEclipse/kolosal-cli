@@ -191,6 +191,7 @@ export async function processSingleFileContent(
   fileSystemService: FileSystemService,
   offset?: number,
   limit?: number,
+  ranges?: Array<[number, number]>, // new parameter
 ): Promise<ProcessedFileReadResult> {
   try {
     if (!fs.existsSync(filePath)) {
@@ -254,15 +255,92 @@ export async function processSingleFileContent(
         const content = await fileSystemService.readTextFile(filePath);
         const lines = content.split('\n');
         const originalLineCount = lines.length;
+        let selectedLines: string[] = [];
+        let returnDisplay = '';
+        let isTruncated = false;
+        let linesShown: [number, number] = [0, 0]; // dummy default
 
-        const startLine = offset || 0;
-        const effectiveLimit =
-          limit === undefined ? DEFAULT_MAX_LINES_TEXT_FILE : limit;
-        // Ensure endLine does not exceed originalLineCount
-        const endLine = Math.min(startLine + effectiveLimit, originalLineCount);
-        // Ensure selectedLines doesn't try to slice beyond array bounds if startLine is too high
-        const actualStartLine = Math.min(startLine, originalLineCount);
-        const selectedLines = lines.slice(actualStartLine, endLine);
+        if (ranges && ranges.length > 0) {
+           // Handle disjoint ranges
+           const contentParts: string[] = [];
+           const displayRanges: string[] = [];
+           
+           for (const [start, end] of ranges) {
+              const actualStart = Math.max(0, start); // 0-based index
+              const actualEnd = Math.min(end, originalLineCount); // Exclusive or inclusive depending on interpretation? 
+              // Assuming ranges are [start, end) or [start, end]?
+              // Usually ranges are 1-based inclusive for users but 0-based for slice.
+              // Let's assume input `ranges` are 0-based [start, end_inclusive] logic similar to offset/limit?
+              // Wait, offset/limit used slice(start, end) where end is start+limit.
+              // Let's assume the caller passes 0-based START and 0-based END (exclusive) to match slice?
+              // OR 1-based line numbers? The caller (ReadFileTool) will handle parsing.
+              // Let's define the contract: ranges contains 0-based [start_index, end_index_exclusive).
+              
+              const slice = lines.slice(actualStart, actualEnd);
+              if (slice.length > 0) {
+                contentParts.push(slice.join('\n'));
+                displayRanges.push(`${actualStart + 1}-${actualEnd}`);
+              }
+           }
+           
+           if (contentParts.length === 0) {
+              // Fallback if no valid ranges
+              returnDisplay = `Read 0 lines (invalid ranges) from ${relativePathForDisplay}`;
+           } else {
+              // Join with visual separator
+              const separator = `\n... [Skipped lines] ...\n`;
+              selectedLines = [contentParts.join(separator)];
+              // We don't split again, selectedLines is just an array of the final text block(s) 
+              // but existing logic expects array of lines.
+              // Actually existing logic: formattedLines = selectedLines.map...
+              // So we should reconstruct the "lines" array if we want line length check?
+              // Or just join it all?
+              // The logic below expects `selectedLines` to be array of strings (lines).
+              // If we want to support the "separator", we can't easily fit it into "selectedLines" array of lines 
+              // without breaking line-by-line processing unless we treat the separator as a line.
+              
+              // Simpler approach: Flatten ranges into selectedLines, inserting separator lines.
+              selectedLines = [];
+              ranges.sort((a, b) => a[0] - b[0]); // Ensure sorted
+              
+              let lastEnd = 0;
+              for (const [start, end] of ranges) {
+                 const actualStart = Math.max(0, start);
+                 const actualEnd = Math.min(end, originalLineCount);
+                 
+                 if (actualStart > lastEnd && selectedLines.length > 0) {
+                     selectedLines.push('... [Skipped lines] ...');
+                 }
+                 
+                 const slice = lines.slice(actualStart, actualEnd);
+                 selectedLines.push(...slice);
+                 lastEnd = actualEnd;
+              }
+              
+              returnDisplay = `Read disjoint ranges (${displayRanges.join(', ')}) from ${relativePathForDisplay}`;
+              isTruncated = true; // By definition ranges imply truncation unless covering whole file
+           }
+        } else {
+            // Original offset/limit logic
+            const startLine = offset || 0;
+            const effectiveLimit =
+              limit === undefined ? DEFAULT_MAX_LINES_TEXT_FILE : limit;
+            const endLine = Math.min(startLine + effectiveLimit, originalLineCount);
+            const actualStartLine = Math.min(startLine, originalLineCount);
+            selectedLines = lines.slice(actualStartLine, endLine);
+            
+            const contentRangeTruncated =
+              startLine > 0 || endLine < originalLineCount;
+            
+            isTruncated = contentRangeTruncated;
+            linesShown = [actualStartLine + 1, endLine];
+
+            if (contentRangeTruncated) {
+              returnDisplay = `Read lines ${
+                actualStartLine + 1
+              }-${endLine} of ${originalLineCount} from ${relativePathForDisplay}`;
+            }
+        }
 
         let linesWereTruncatedInLength = false;
         const formattedLines = selectedLines.map((line) => {
@@ -275,30 +353,23 @@ export async function processSingleFileContent(
           return line;
         });
 
-        const contentRangeTruncated =
-          startLine > 0 || endLine < originalLineCount;
-        const isTruncated = contentRangeTruncated || linesWereTruncatedInLength;
-        const llmContent = formattedLines.join('\n');
-
-        // By default, return nothing to streamline the common case of a successful read_file.
-        let returnDisplay = '';
-        if (contentRangeTruncated) {
-          returnDisplay = `Read lines ${
-            actualStartLine + 1
-          }-${endLine} of ${originalLineCount} from ${relativePathForDisplay}`;
-          if (linesWereTruncatedInLength) {
-            returnDisplay += ' (some lines were shortened)';
-          }
-        } else if (linesWereTruncatedInLength) {
-          returnDisplay = `Read all ${originalLineCount} lines from ${relativePathForDisplay} (some lines were shortened)`;
+        if (linesWereTruncatedInLength) {
+            isTruncated = true;
+            if (!returnDisplay) {
+               returnDisplay = `Read all ${originalLineCount} lines from ${relativePathForDisplay} (some lines were shortened)`;
+            } else {
+               returnDisplay += ' (some lines were shortened)';
+            }
         }
+
+        const llmContent = formattedLines.join('\n');
 
         return {
           llmContent,
           returnDisplay,
           isTruncated,
           originalLineCount,
-          linesShown: [actualStartLine + 1, endLine],
+          linesShown,
         };
       }
       case 'image':

@@ -32,6 +32,7 @@ import {
 } from '../telemetry/index.js';
 import { logCliConfiguration, logIdeConnection } from '../telemetry/loggers.js';
 import { IdeConnectionEvent, IdeConnectionType } from '../telemetry/types.js';
+import { BatchEditTool } from '../tools/batch-edit.js';
 import { EditTool } from '../tools/edit.js';
 import { ExitPlanModeTool } from '../tools/exitPlanMode.js';
 import { GlobTool } from '../tools/glob.js';
@@ -82,6 +83,7 @@ export interface BugCommandSettings {
 
 export interface ChatCompressionSettings {
   contextPercentageThreshold?: number;
+  pruningType?: 'summarize' | 'prune';
 }
 
 export interface SummarizeToolOutputSettings {
@@ -1076,6 +1078,7 @@ export class Config {
 
     registerCoreTool(GlobTool, this);
     registerCoreTool(EditTool, this);
+    registerCoreTool(BatchEditTool, this);
     registerCoreTool(WriteFileTool, this);
     registerCoreTool(ReadManyFilesTool, this);
     registerCoreTool(ShellTool, this);

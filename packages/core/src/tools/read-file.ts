@@ -39,6 +39,11 @@ export interface ReadFileToolParams {
    * The number of lines to read (optional)
    */
   limit?: number;
+
+  /**
+   * Ranges string: "1-10, 20-30"
+   */
+  ranges?: string;
 }
 
 class ReadFileToolInvocation extends BaseToolInvocation<
@@ -65,12 +70,32 @@ class ReadFileToolInvocation extends BaseToolInvocation<
   }
 
   async execute(): Promise<ToolResult> {
+    let parsedRanges: Array<[number, number]> | undefined = undefined;
+    if (this.params.ranges) {
+        parsedRanges = [];
+        const parts = this.params.ranges.split(',');
+        for (const part of parts) {
+            const [startStr, endStr] = part.trim().split('-');
+            const start = parseInt(startStr, 10);
+            const end = parseInt(endStr, 10);
+            if (!isNaN(start) && !isNaN(end)) {
+                 // Convert 1-based [start, end] inclusive to 0-based [start, end_exclusive] for slice?
+                 // Wait, processSingleFileContent uses 0-based offset/limit which maps to slice(start, start+limit).
+                 // So slice takes [start, end_exclusive).
+                 // If input is "1-10", it means lines 1 to 10 inclusive.
+                 // So 0-based index: 0 to 10 (exclusive).
+                 parsedRanges.push([start - 1, end]);
+            }
+        }
+    }
+
     const result = await processSingleFileContent(
       this.params.absolute_path,
       this.config.getTargetDir(),
       this.config.getFileSystemService(),
       this.params.offset,
       this.params.limit,
+      parsedRanges,
     );
 
     if (result.error) {
@@ -162,6 +187,11 @@ export class ReadFileTool extends BaseDeclarativeTool<
               "Optional: For text files, maximum number of lines to read. Use with 'offset' to paginate through large files. If omitted, reads the entire file (if feasible, up to a default limit).",
             type: 'number',
           },
+          ranges: {
+            description:
+              "Optional: For text files, a string representing line ranges to read (e.g., '1-10, 20-30'). Disjoint ranges are joined with a separator. Overrides offset/limit if provided. 1-based line numbers.",
+            type: 'string',
+          },
         },
         required: ['absolute_path'],
         type: 'object',
@@ -191,6 +221,13 @@ export class ReadFileTool extends BaseDeclarativeTool<
     }
     if (params.limit !== undefined && params.limit <= 0) {
       return 'Limit must be a positive number';
+    }
+    
+    // Simple validation for ranges format: "1-10, 20-30"
+    if (params.ranges) {
+        if (!/^(\d+-\d+)(,\s*\d+-\d+)*$/.test(params.ranges.trim())) {
+             return "Ranges must be in the format 'start-end' separated by commas (e.g. '1-10, 20-30').";
+        }
     }
 
     const fileService = this.config.getFileService();

@@ -9,16 +9,11 @@
  * These constants are used across multiple files and should be kept in sync
  * with the actual tool class names.
  */
-export const ToolNames = {
-  EDIT: 'edit',
-  WRITE_FILE: 'write_file',
-  READ_FILE: 'read_file',
-  READ_MANY_FILES: 'read_many_files',
-  GREP: 'search_file_content',
-  GLOB: 'glob',
-  SHELL: 'run_shell_command',
-  TODO_WRITE: 'todo_write',
-  MEMORY: 'save_memory',
-  TASK: 'task',
-  EXIT_PLAN_MODE: 'exit_plan_mode',
-} as const;
+export enum ToolNames {
+  READ_FILE = 'read_file',
+  READ_MANY_FILES = 'read_many_files',
+  WRITE_FILE = 'write_file',
+  EDIT = 'replace',
+  BATCH_EDIT = 'batch_replace',
+  RUN_SHELL_COMMAND = 'run_shell_command',
+}
