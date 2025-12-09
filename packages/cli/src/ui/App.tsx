@@ -20,6 +20,7 @@ import {
   MessageType,
   ToolCallStatus,
   type HistoryItemWithoutId,
+  type HistoryItemCompression,
 } from './types.js';
 import { useTerminalSize } from './hooks/useTerminalSize.js';
 import { useGeminiStream } from './hooks/useGeminiStream.js';
@@ -108,6 +109,7 @@ import {
   isGenericQuotaExceededError,
   UserTierId,
   Storage,
+  tokenLimit,
 } from '@kolosal-ai/kolosal-ai-core';
 import type { IdeIntegrationNudgeResult } from './IdeIntegrationNudge.js';
 import { IdeIntegrationNudge } from './IdeIntegrationNudge.js';
@@ -2711,6 +2713,45 @@ const App = ({ config, settings, startupWarnings = [], version }: AppProps) => {
       setGeminiMdFileCount(config.getGeminiMdFileCount());
     }
   }, [config, config.getGeminiMdFileCount]);
+
+  // Auto-compress when token usage reaches 80%
+  useEffect(() => {
+    const tokenCount = sessionStats.lastPromptTokenCount;
+    if (tokenCount > 0 && currentModel) {
+      const limit = tokenLimit(currentModel);
+      const usagePercent = (tokenCount / limit) * 100;
+      
+      if (usagePercent >= 80 && pendingHistoryItems.length === 0) {
+        // Trigger auto-compression
+        const autoCompress = async () => {
+          try {
+            const promptId = `auto-compress-${Date.now()}`;
+            const compressed = await config
+              ?.getGeminiClient()
+              ?.tryCompressChat(promptId, true);
+            if (compressed) {
+              addItem(
+                {
+                  type: MessageType.COMPRESSION,
+                  compression: {
+                    isPending: false,
+                    originalTokenCount: compressed.originalTokenCount,
+                    newTokenCount: compressed.newTokenCount,
+                    compressionStatus: compressed.compressionStatus,
+                  },
+                } as HistoryItemCompression,
+                Date.now(),
+              );
+            }
+          } catch (e) {
+            // Auto-compression failed, but don't show error to avoid interrupting user
+            console.warn('Auto-compression failed:', e);
+          }
+        };
+        autoCompress();
+      }
+    }
+  }, [sessionStats.lastPromptTokenCount, currentModel, config, pendingHistoryItems.length, addItem]);
 
   const logger = useLogger(config.storage);
 

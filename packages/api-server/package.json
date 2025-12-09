@@ -17,7 +17,7 @@
     "start:server": "node dist/standalone.js",
     "start:server:debug": "DEBUG=1 node dist/standalone.js",
     "start:server:port": "node dist/standalone.js",
-    "test": "vitest",
+    "test": "vitest run --no-watch",
     "test:watch": "vitest --watch",
     "lint": "eslint src",
     "clean": "rm -rf dist"

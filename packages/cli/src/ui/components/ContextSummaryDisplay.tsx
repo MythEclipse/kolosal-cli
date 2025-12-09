@@ -10,10 +10,10 @@ import { Colors } from '../colors.js';
 import {
   type IdeContext,
   type MCPServerConfig,
-  tokenLimit,
 } from '@kolosal-ai/kolosal-ai-core';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
+import { ContextUsageDisplay } from './ContextUsageDisplay.js';
 
 interface ContextSummaryDisplayProps {
   geminiMdFileCount: number;
@@ -102,16 +102,7 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     return text;
   })();
 
-  const tokenText = (() => {
-    if (!promptTokenCount || !model) {
-      return '';
-    }
-    const limit = tokenLimit(model);
-    const percentage = promptTokenCount / limit;
-    return `${promptTokenCount.toLocaleString()} / ${limit.toLocaleString()} tokens (${((1 - percentage) * 100).toFixed(0)}% left)`;
-  })();
-
-  const summaryParts = [openFilesText, geminiMdText, mcpText, tokenText].filter(Boolean);
+  const summaryParts = [openFilesText, geminiMdText, mcpText].filter(Boolean);
 
   if (isNarrow) {
     return (
@@ -122,13 +113,34 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
             {'  '}- {part}
           </Text>
         ))}
+        {promptTokenCount && model && (
+          <Box marginLeft={2} marginTop={1}>
+            <ContextUsageDisplay 
+              promptTokenCount={promptTokenCount} 
+              model={model} 
+            />
+          </Box>
+        )}
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Text color={Colors.Gray}>Using: {summaryParts.join(' | ')}</Text>
+    <Box flexDirection="column">
+      <Box>
+        <Text color={Colors.Gray}>Using: {summaryParts.join(' | ')}</Text>
+        {promptTokenCount && model && summaryParts.length > 0 && (
+          <Text color={Colors.Gray}> | </Text>
+        )}
+      </Box>
+      {promptTokenCount && model && (
+        <Box marginLeft={2}>
+          <ContextUsageDisplay 
+            promptTokenCount={promptTokenCount} 
+            model={model} 
+          />
+        </Box>
+      )}
     </Box>
   );
 };
