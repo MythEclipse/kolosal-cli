@@ -67,7 +67,7 @@ describe('TodoWriteTool', () => {
       expect(result).toBeNull();
     });
 
-    it('should reject todos with empty content', () => {
+    it('should filter out todos with empty content', () => {
       const params: TodoWriteParams = {
         todos: [
           { id: '1', content: '', status: 'pending' },
@@ -76,12 +76,12 @@ describe('TodoWriteTool', () => {
       };
 
       const result = tool.validateToolParams(params);
-      expect(result).toContain(
-        'Each todo must have a non-empty "content" string',
-      );
+      expect(result).toBeNull();
+      expect(params.todos).toHaveLength(1);
+      expect(params.todos[0].id).toBe('2');
     });
 
-    it('should reject todos with empty id', () => {
+    it('should filter out todos with empty id', () => {
       const params: TodoWriteParams = {
         todos: [
           { id: '', content: 'Task 1', status: 'pending' },
@@ -90,10 +90,12 @@ describe('TodoWriteTool', () => {
       };
 
       const result = tool.validateToolParams(params);
-      expect(result).toContain('non-empty "id" string');
+      expect(result).toBeNull();
+      expect(params.todos).toHaveLength(1);
+      expect(params.todos[0].id).toBe('2');
     });
 
-    it('should reject todos with invalid status', () => {
+    it('should filter out todos with invalid status', () => {
       const params: TodoWriteParams = {
         todos: [
           {
@@ -106,9 +108,23 @@ describe('TodoWriteTool', () => {
       };
 
       const result = tool.validateToolParams(params);
-      expect(result).toContain(
-        'Each todo must have a valid "status" (pending, in_progress, completed)',
-      );
+      expect(result).toBeNull();
+      expect(params.todos).toHaveLength(1);
+      expect(params.todos[0].id).toBe('2');
+    });
+
+    it('should filter out all invalid todos', () => {
+      const params: TodoWriteParams = {
+        todos: [
+          { id: '', content: 'Task 1', status: 'pending' },
+          { id: '2', content: '', status: 'pending' },
+          { id: '3', content: 'Task 3', status: 'invalid' as TodoItem['status'] },
+        ],
+      };
+
+      const result = tool.validateToolParams(params);
+      expect(result).toBeNull();
+      expect(params.todos).toHaveLength(0);
     });
 
     it('should reject todos with duplicate IDs', () => {

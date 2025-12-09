@@ -416,22 +416,23 @@ export class TodoWriteTool extends BaseDeclarativeTool<
       return 'Parameter "todos" must be an array.';
     }
 
-    // Validate individual todos
-    for (const todo of params.todos) {
-      if (!todo.id || typeof todo.id !== 'string' || todo.id.trim() === '') {
-        return 'Each todo must have a non-empty "id" string.';
-      }
-      if (
-        !todo.content ||
-        typeof todo.content !== 'string' ||
-        todo.content.trim() === ''
-      ) {
-        return 'Each todo must have a non-empty "content" string.';
-      }
-      if (!['pending', 'in_progress', 'completed'].includes(todo.status)) {
-        return 'Each todo must have a valid "status" (pending, in_progress, completed).';
-      }
-    }
+    // Filter out invalid todos and keep only valid ones
+    const validTodos = params.todos.filter((todo) => {
+      return (
+        todo &&
+        typeof todo === 'object' &&
+        todo.id &&
+        typeof todo.id === 'string' &&
+        todo.id.trim() !== '' &&
+        todo.content &&
+        typeof todo.content === 'string' &&
+        todo.content.trim() !== '' &&
+        ['pending', 'in_progress', 'completed'].includes(todo.status)
+      );
+    });
+
+    // Update params with only valid todos
+    params.todos = validTodos;
 
     // Check for duplicate IDs
     const ids = params.todos.map((todo) => todo.id);
