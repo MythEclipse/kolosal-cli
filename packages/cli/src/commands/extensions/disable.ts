@@ -7,7 +7,7 @@
 import { type CommandModule } from 'yargs';
 import { disableExtension } from '../../config/extension.js';
 import { SettingScope } from '../../config/settings.js';
-import { getErrorMessage } from '../../utils/errors.js';
+import { FatalConfigError, getErrorMessage } from '@kolosal-ai/kolosal-ai-core';
 
 interface DisableArgs {
   name: string;
@@ -21,8 +21,7 @@ export async function handleDisable(args: DisableArgs) {
       `Extension "${args.name}" successfully disabled for scope "${args.scope}".`,
     );
   } catch (error) {
-    console.error(getErrorMessage(error));
-    process.exit(1);
+    throw new FatalConfigError(getErrorMessage(error));
   }
 }
 

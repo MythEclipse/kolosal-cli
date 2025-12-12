@@ -5,8 +5,12 @@
  */
 
 import type { CommandModule } from 'yargs';
-import { updateExtension } from '../../config/extension.js';
-import { getErrorMessage } from '../../utils/errors.js';
+import {
+  updateExtension,
+  loadUserExtensions,
+  toOutputString,
+} from '../../config/extension.js';
+import { FatalConfigError, getErrorMessage } from '@kolosal-ai/kolosal-ai-core';
 
 interface UpdateArgs {
   name: string;
@@ -14,7 +18,28 @@ interface UpdateArgs {
 
 export async function handleUpdate(args: UpdateArgs) {
   try {
-    // TODO(chrstnb): we should list extensions if the requested extension is not installed.
+    // Check if extension exists before attempting update
+    const extensions = loadUserExtensions();
+    const extensionExists = extensions.some(
+      (ext) => ext.config.name === args.name,
+    );
+
+    if (!extensionExists) {
+      if (extensions.length === 0) {
+        console.log(`Extension "${args.name}" is not installed.`);
+        console.log('No extensions are currently installed.');
+      } else {
+        console.log(`Extension "${args.name}" is not installed.`);
+        console.log('\nAvailable extensions:');
+        console.log(
+          extensions
+            .map((extension) => toOutputString(extension))
+            .join('\n\n'),
+        );
+      }
+      return;
+    }
+
     const updatedExtensionInfo = await updateExtension(args.name);
     if (!updatedExtensionInfo) {
       console.log(`Extension "${args.name}" failed to update.`);
@@ -24,8 +49,7 @@ export async function handleUpdate(args: UpdateArgs) {
       `Extension "${args.name}" successfully updated: ${updatedExtensionInfo.originalVersion} → ${updatedExtensionInfo.updatedVersion}.`,
     );
   } catch (error) {
-    console.error(getErrorMessage(error));
-    process.exit(1);
+    throw new FatalConfigError(getErrorMessage(error));
   }
 }
 

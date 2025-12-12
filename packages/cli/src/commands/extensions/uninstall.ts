@@ -6,7 +6,7 @@
 
 import type { CommandModule } from 'yargs';
 import { uninstallExtension } from '../../config/extension.js';
-import { getErrorMessage } from '../../utils/errors.js';
+import { FatalConfigError, getErrorMessage } from '@kolosal-ai/kolosal-ai-core';
 
 interface UninstallArgs {
   name: string;
@@ -17,8 +17,7 @@ export async function handleUninstall(args: UninstallArgs) {
     await uninstallExtension(args.name);
     console.log(`Extension "${args.name}" successfully uninstalled.`);
   } catch (error) {
-    console.error(getErrorMessage(error));
-    process.exit(1);
+    throw new FatalConfigError(getErrorMessage(error));
   }
 }
 

@@ -10,7 +10,7 @@ import {
   type ExtensionInstallMetadata,
 } from '../../config/extension.js';
 
-import { getErrorMessage } from '../../utils/errors.js';
+import { FatalConfigError, getErrorMessage } from '@kolosal-ai/kolosal-ai-core';
 
 interface InstallArgs {
   source?: string;
@@ -28,8 +28,7 @@ export async function handleInstall(args: InstallArgs) {
       `Extension "${extensionName}" installed successfully and enabled.`,
     );
   } catch (error) {
-    console.error(getErrorMessage(error));
-    process.exit(1);
+    throw new FatalConfigError(getErrorMessage(error));
   }
 }
 
