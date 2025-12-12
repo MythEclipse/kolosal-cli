@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { startServerIfEnabled, stopGlobalServer } from './server/kolosal-server-manager.js';
-
 import type { Config } from '@kolosal-code/kolosal-code-core';
 import {
   ApprovalMode,
@@ -53,49 +51,58 @@ import { getUserStartupWarnings } from './utils/userStartupWarnings.js';
 import { getCliVersion } from './utils/version.js';
 import { validateNonInteractiveAuth } from './validateNonInterActiveAuth.js';
 import { runZedIntegration } from './zed-integration/zedIntegration.js';
+import { logger } from './utils/logger.js';
+import {
+  MEMORY_CONFIG,
+  DEFAULT_PORTS,
+  EXIT_CODES,
+  ENV_VARS,
+  DEFAULT_HOSTS,
+  DNS_RESOLUTION_ORDERS,
+  TRUTHY_VALUES,
+} from './constants/index.js';
+import {
+  initializeKolosalServer,
+  initializeApiServer,
+} from './server/server-lifecycle.js';
 
 export function validateDnsResolutionOrder(
   order: string | undefined,
 ): DnsResolutionOrder {
-  const defaultValue: DnsResolutionOrder = 'ipv4first';
+  const defaultValue: DnsResolutionOrder = DNS_RESOLUTION_ORDERS.IPV4_FIRST;
   if (order === undefined) {
     return defaultValue;
   }
-  if (order === 'ipv4first' || order === 'verbatim') {
+  if (order === DNS_RESOLUTION_ORDERS.IPV4_FIRST || order === DNS_RESOLUTION_ORDERS.VERBATIM) {
     return order;
   }
   // We don't want to throw here, just warn and use the default.
-  console.warn(
-    `Invalid value for dnsResolutionOrder in settings: "${order}". Using default "${defaultValue}".`,
-  );
+  logger.warn('Invalid DNS resolution order in settings', { order, defaultValue });
   return defaultValue;
 }
 
-function getNodeMemoryArgs(config: Config): string[] {
+function getNodeMemoryArgs(_config: Config): string[] {
   const totalMemoryMB = os.totalmem() / (1024 * 1024);
   const heapStats = v8.getHeapStatistics();
   const currentMaxOldSpaceSizeMb = Math.floor(
     heapStats.heap_size_limit / 1024 / 1024,
   );
 
-  // Set target to 50% of total memory
-  const targetMaxOldSpaceSizeInMB = Math.floor(totalMemoryMB * 0.5);
-  if (config.getDebugMode()) {
-    console.debug(
-      `Current heap size ${currentMaxOldSpaceSizeMb.toFixed(2)} MB`,
-    );
-  }
+  // Set target to configured percentage of total memory
+  const targetMaxOldSpaceSizeInMB = Math.floor(totalMemoryMB * MEMORY_CONFIG.TARGET_HEAP_PERCENTAGE);
+  logger.debug('Memory configuration', {
+    currentHeapSizeMB: currentMaxOldSpaceSizeMb.toFixed(2),
+    targetHeapSizeMB: targetMaxOldSpaceSizeInMB.toFixed(2),
+  });
 
-  if (process.env['GEMINI_CLI_NO_RELAUNCH']) {
+  if (process.env[ENV_VARS.NO_RELAUNCH]) {
     return [];
   }
 
   if (targetMaxOldSpaceSizeInMB > currentMaxOldSpaceSizeMb) {
-    if (config.getDebugMode()) {
-      console.debug(
-        `Need to relaunch with more memory: ${targetMaxOldSpaceSizeInMB.toFixed(2)} MB`,
-      );
-    }
+    logger.debug('Need to relaunch with more memory', {
+      targetMemoryMB: targetMaxOldSpaceSizeInMB.toFixed(2),
+    });
     return [`--max-old-space-size=${targetMaxOldSpaceSizeInMB}`];
   }
 
@@ -104,7 +111,9 @@ function getNodeMemoryArgs(config: Config): string[] {
 
 async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
   const nodeArgs = [...additionalArgs, ...process.argv.slice(1)];
-  const newEnv = { ...process.env, GEMINI_CLI_NO_RELAUNCH: 'true' };
+  const newEnv = { ...process.env, [ENV_VARS.NO_RELAUNCH]: 'true' };
+
+  logger.debug('Relaunching with additional arguments', { additionalArgs });
 
   const child = spawn(process.execPath, nodeArgs, {
     stdio: 'inherit',
@@ -112,7 +121,7 @@ async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
   });
 
   await new Promise((resolve) => child.on('close', resolve));
-  process.exit(0);
+  process.exit(EXIT_CODES.SUCCESS);
 }
 
 export function setupUnhandledRejectionHandler() {
@@ -122,13 +131,12 @@ export function setupUnhandledRejectionHandler() {
 This is an unexpected error. Please file a bug report using the /bug tool.
 CRITICAL: Unhandled Promise Rejection!
 =========================================
-Reason: ${reason}${
-      reason instanceof Error && reason.stack
+Reason: ${reason}${reason instanceof Error && reason.stack
         ? `
 Stack trace:
 ${reason.stack}`
         : ''
-    }`;
+      }`;
     appEvents.emit(AppEvent.LogError, errorMessage);
     if (!unhandledRejectionOccurred) {
       unhandledRejectionOccurred = true;
@@ -233,15 +241,15 @@ export async function startInteractiveUI(
 export async function startServerOnly(
   config: Config,
   settings: LoadedSettings,
-  workspaceRoot: string,
+  _workspaceRoot: string,
 ): Promise<void> {
   // Server-only mode - no UI, no interactive elements
   // Skip UI initialization, theme loading, and desktop integration
   // But keep essential authentication and client initialization
-  
+
   // CRITICAL: Initialize the config - this sets up contentGeneratorConfig
   await config.initialize();
-  
+
   // Get authType from current model (needed for client initialization)
   const { getCurrentModelAuthType, getSavedModelEntry } = await import('./config/savedModels.js');
   const currentModelName = settings.merged.model?.name;
@@ -251,14 +259,14 @@ export async function startServerOnly(
   const hasStoredApiKey = Boolean(currentModelEntry?.apiKey?.trim());
   const hasPersistedKolosalToken = Boolean(
     typeof settings.merged.kolosalOAuthToken === 'string' &&
-      settings.merged.kolosalOAuthToken.trim(),
+    settings.merged.kolosalOAuthToken.trim(),
   );
   const usesOpenAICompatibleProvider = currentModelEntry?.provider === 'openai-compatible';
 
   // Set approval mode to YOLO before creating the client to ensure all tools are available
   const originalApprovalMode = config.getApprovalMode();
   config.setApprovalMode(ApprovalMode.YOLO);
-  
+
   // CRITICAL: Create the Gemini client by calling refreshAuth
   // This is what actually creates this.geminiClient
   try {
@@ -269,7 +277,7 @@ export async function startServerOnly(
     }
     // Continue anyway - some operations might work without auth
   }
-  
+
   // Restore original approval mode after client creation
   config.setApprovalMode(originalApprovalMode);
 
@@ -285,65 +293,50 @@ export async function startServerOnly(
     try {
       await getOauthClient(currentAuthType, config);
     } catch (err) {
-      if (config.getDebugMode()) {
-        console.error('[server-only] Authentication failed:', err);
-      }
+      logger.error('[server-only] Authentication failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       // Continue anyway - some operations might work without auth
     }
   }
 
   // Start kolosal-server in the background if enabled
-  const serverManager = await startServerIfEnabled({
+  await initializeKolosalServer(config, {
     debug: config.getDebugMode(),
     autoStart: true,
-    port: 8087,
+    port: DEFAULT_PORTS.KOLOSAL_SERVER,
   });
-
-  // Register cleanup to stop the server when CLI exits
-  if (serverManager) {
-    registerCleanup(async () => {
-      try {
-        await stopGlobalServer();
-      } catch (error) {
-        if (config.getDebugMode()) {
-          console.error('Error stopping kolosal-server:', error);
-        }
-      }
-    });
-  }
 
   // Start API server with forced enabled state for server-only mode
   try {
-    const { startApiServer } = await import('@kolosal-ai/api-server');
-    const port = Number(process.env['KOLOSAL_CLI_API_PORT'] ?? settings.merged.api?.port ?? 38080);
-    const host = process.env['KOLOSAL_CLI_API_HOST'] ?? settings.merged.api?.host ?? '127.0.0.1';
-    
-    const apiServer = await startApiServer(config, {
+    const port = Number(process.env[ENV_VARS.API_PORT] ?? settings.merged.api?.port ?? DEFAULT_PORTS.API_SERVER);
+    const host = process.env[ENV_VARS.API_HOST] ?? settings.merged.api?.host ?? DEFAULT_HOSTS.LOCALHOST;
+
+    await initializeApiServer(config, {
       port,
       host,
       enableCors: true,
     });
-    
-    registerCleanup(async () => {
-      try { await apiServer.close(); } catch { /* ignore */ }
-    });
-    
+
     // Always log debug info in server-only mode for troubleshooting
-    console.error(`[server-only] API server listening on http://${host}:${port}`);
-    console.error(`[server-only] Model: ${currentModelName}, Auth: ${currentAuthType}`);
-    console.error(`[server-only] Excluded tools:`, config.getExcludeTools());
+    logger.info('[server-only] API server listening', { url: `http://${host}:${port}` });
+    logger.info('[server-only] Configuration', {
+      model: currentModelName,
+      auth: currentAuthType,
+      excludedTools: config.getExcludeTools(),
+    });
   } catch (e) {
-    console.error('Failed to start API server in server-only mode:', e);
+    logger.error('Failed to start API server in server-only mode', {
+      error: e instanceof Error ? e.message : String(e),
+    });
     throw e;
   }
 
   // Keep the process alive and handle graceful shutdown
   const shutdown = async () => {
-    if (config.getDebugMode()) {
-      console.error('[server-only] Shutting down...');
-    }
+    logger.debug('[server-only] Shutting down...');
     await runExitCleanup();
-    process.exit(0);
+    process.exit(EXIT_CODES.SUCCESS);
   };
 
   process.once('SIGINT', shutdown);
@@ -396,22 +389,20 @@ export async function main() {
   );
 
   if (argv.promptInteractive && !process.stdin.isTTY) {
-    console.error(
-      'Error: The --prompt-interactive flag is not supported when piping input from stdin.',
-    );
-    process.exit(1);
+    logger.error('The --prompt-interactive flag is not supported when piping input from stdin');
+    process.exit(EXIT_CODES.ERROR);
   }
 
   if (config.getListExtensions()) {
-    console.log('Installed extensions:');
+    logger.info('Installed extensions:');
     for (const extension of extensions) {
-      console.log(`- ${extension.config.name}`);
+      logger.info(`- ${extension.config.name}`);
     }
-    process.exit(0);
+    process.exit(EXIT_CODES.SUCCESS);
   }
   // Clean up empty API keys
-  if (process.env['OPENAI_API_KEY']?.trim() === '') {
-    delete process.env['OPENAI_API_KEY'];
+  if (process.env[ENV_VARS.OPENAI_API_KEY]?.trim() === '') {
+    delete process.env[ENV_VARS.OPENAI_API_KEY];
   }
 
   setMaxSizedBoxDebugging(config.getDebugMode());
@@ -419,14 +410,14 @@ export async function main() {
   // Check for server-only mode first (before config.initialize())
   if (argv.serverOnly) {
     // Override API settings for server-only mode
-    process.env['KOLOSAL_CLI_API'] = 'true'; // Force API enabled
+    process.env[ENV_VARS.API_ENABLED] = 'true'; // Force API enabled
     if (argv.apiPort) {
-      process.env['KOLOSAL_CLI_API_PORT'] = argv.apiPort.toString();
+      process.env[ENV_VARS.API_PORT] = argv.apiPort.toString();
     }
     if (argv.apiHost) {
-      process.env['KOLOSAL_CLI_API_HOST'] = argv.apiHost;
+      process.env[ENV_VARS.API_HOST] = argv.apiHost;
     }
-    
+
     await startServerOnly(config, settings, workspaceRoot);
     return; // Exit early for server-only mode
   }
@@ -434,55 +425,39 @@ export async function main() {
   await config.initialize();
 
   // Optionally start lightweight HTTP API server to expose generation endpoints
-  const apiEnabledEnv = process.env['KOLOSAL_CLI_API'];
+  const apiEnabledEnv = process.env[ENV_VARS.API_ENABLED];
   const apiEnabledSetting = settings.merged.api?.enabled ?? true;
   const apiEnabled = apiEnabledEnv != null
-    ? ['1','true','yes','on'].includes(String(apiEnabledEnv).toLowerCase())
+    ? (TRUTHY_VALUES as readonly string[]).includes(String(apiEnabledEnv).toLowerCase())
     : apiEnabledSetting;
-  let apiServer: { close: () => Promise<void> } | undefined;
+
   if (apiEnabled) {
     try {
-      const { startApiServer } = await import('@kolosal-ai/api-server');
-      const port = Number(argv.apiPort ?? process.env['KOLOSAL_CLI_API_PORT'] ?? settings.merged.api?.port ?? 38080);
-      const host = argv.apiHost ?? process.env['KOLOSAL_CLI_API_HOST'] ?? settings.merged.api?.host ?? '127.0.0.1';
-      const corsEnabled = (process.env['KOLOSAL_CLI_API_CORS'] ?? '')
-        ? ['1','true','yes'].includes(String(process.env['KOLOSAL_CLI_API_CORS']).toLowerCase())
+      const port = Number(argv.apiPort ?? process.env[ENV_VARS.API_PORT] ?? settings.merged.api?.port ?? DEFAULT_PORTS.API_SERVER);
+      const host = argv.apiHost ?? process.env[ENV_VARS.API_HOST] ?? settings.merged.api?.host ?? DEFAULT_HOSTS.LOCALHOST;
+      const corsEnabledEnv = process.env[ENV_VARS.API_CORS] ?? '';
+      const corsEnabled = corsEnabledEnv
+        ? (TRUTHY_VALUES.slice(0, 3) as readonly string[]).includes(String(corsEnabledEnv).toLowerCase())
         : settings.merged.api?.corsEnabled ?? true;
-      apiServer = await startApiServer(config, {
+
+      await initializeApiServer(config, {
         port,
         host,
         enableCors: corsEnabled,
       });
-      registerCleanup(async () => {
-        try { await apiServer?.close(); } catch { /* ignore */ }
-      });
-      if (config.getDebugMode()) {
-        console.error(`[api] server listening on http://${host}:${port}`);
-      }
     } catch (e) {
-      console.error('Failed to start API server:', e);
+      logger.error('Failed to start API server', {
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 
   // Start kolosal-server in the background if enabled
-  const serverManager = await startServerIfEnabled({
+  await initializeKolosalServer(config, {
     debug: config.getDebugMode(),
-    autoStart: true, // TODO: Make this configurable via settings
-    port: 8087, // Use a specific port for kolosal-server
+    autoStart: true,
+    port: DEFAULT_PORTS.KOLOSAL_SERVER,
   });
-
-  // Register cleanup to stop the server when CLI exits
-  if (serverManager) {
-    registerCleanup(async () => {
-      try {
-        await stopGlobalServer();
-      } catch (error) {
-        if (config.getDebugMode()) {
-          console.error('Error stopping kolosal-server:', error);
-        }
-      }
-    });
-  }
 
   if (config.getIdeMode()) {
     await config.getIdeClient().connect();
@@ -496,7 +471,7 @@ export async function main() {
     if (!themeManager.setActiveTheme(settings.merged.ui?.theme)) {
       // If the theme is not found during initial load, log a warning and continue.
       // The useThemeCommand hook in App.tsx will handle opening the dialog.
-      console.warn(`Warning: Theme "${settings.merged.ui?.theme}" not found.`);
+      logger.warn('Theme not found', { theme: settings.merged.ui?.theme });
     }
   }
 
@@ -509,7 +484,7 @@ export async function main() {
   const hasStoredApiKey = Boolean(currentModelEntry?.apiKey?.trim());
   const hasPersistedKolosalToken = Boolean(
     typeof settings.merged.kolosalOAuthToken === 'string' &&
-      settings.merged.kolosalOAuthToken.trim(),
+    settings.merged.kolosalOAuthToken.trim(),
   );
   const usesOpenAICompatibleProvider = currentModelEntry?.provider === 'openai-compatible';
 
@@ -532,8 +507,10 @@ export async function main() {
           }
           await config.refreshAuth(currentAuthType);
         } catch (err) {
-          console.error('Error authenticating:', err);
-          process.exit(1);
+          logger.error('Error authenticating', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          process.exit(EXIT_CODES.ERROR);
         }
       }
       let stdinData = '';
@@ -643,12 +620,10 @@ export async function main() {
     config,
   );
 
-  if (config.getDebugMode()) {
-    console.log('Session ID: %s', sessionId);
-  }
+  logger.debug('Session ID', { sessionId });
 
   await runNonInteractive(nonInteractiveConfig, input, prompt_id);
-  process.exit(0);
+  process.exit(EXIT_CODES.SUCCESS);
 }
 
 function setWindowTitle(title: string, settings: LoadedSettings) {

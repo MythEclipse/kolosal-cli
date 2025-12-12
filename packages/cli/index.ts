@@ -9,22 +9,24 @@
 import './src/gemini.js';
 import { main } from './src/gemini.js';
 import { FatalError } from '@kolosal-code/kolosal-code-core';
+import { logger } from './src/utils/logger.js';
+import { ENV_VARS, EXIT_CODES } from './src/constants/index.js';
 
 // --- Global Entry Point ---
 main().catch((error) => {
   if (error instanceof FatalError) {
     let errorMessage = error.message;
-    if (!process.env['NO_COLOR']) {
+    if (!process.env[ENV_VARS.NO_COLOR]) {
       errorMessage = `\x1b[31m${errorMessage}\x1b[0m`;
     }
-    console.error(errorMessage);
+    logger.error(errorMessage);
     process.exit(error.exitCode);
   }
-  console.error('An unexpected critical error occurred:');
+  logger.error('An unexpected critical error occurred');
   if (error instanceof Error) {
-    console.error(error.stack);
+    logger.error(error.stack || error.message);
   } else {
-    console.error(String(error));
+    logger.error(String(error));
   }
-  process.exit(1);
+  process.exit(EXIT_CODES.ERROR);
 });
