@@ -57,7 +57,7 @@ interface ContentRetryOptions {
 }
 
 const INVALID_CONTENT_RETRY_OPTIONS: ContentRetryOptions = {
-  maxAttempts: 3, // 1 initial call + 2 retries
+  maxAttempts: 2, // 1 initial call + 1 retry (reduced from 3 for efficiency)
   initialDelayMs: 500,
 };
 /**
@@ -700,9 +700,7 @@ export class GeminiChat {
       automaticFunctionCallingHistory.length > 0
     ) {
       // Curate and then merge with existing history to avoid consecutive user turns
-      const curatedAfc = extractCuratedHistory(
-        automaticFunctionCallingHistory,
-      );
+      const curatedAfc = extractCuratedHistory(automaticFunctionCallingHistory);
       if (curatedAfc.length > 0) {
         const firstAfc = curatedAfc[0];
         const lastHist = this.history[this.history.length - 1];
@@ -827,7 +825,9 @@ export class GeminiChat {
                     !candidate.thought,
                 );
 
-              if ((previousTextPart?.text as string | undefined) === part.text) {
+              if (
+                (previousTextPart?.text as string | undefined) === part.text
+              ) {
                 continue;
               }
 
@@ -849,7 +849,6 @@ export class GeminiChat {
   /**
    * Handles Kolosal OAuth authentication errors and rate limiting
    */
-
 }
 /** Visible for Testing */
 export function isSchemaDepthError(errorMessage: string): boolean {

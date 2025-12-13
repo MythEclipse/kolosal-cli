@@ -153,3 +153,28 @@ export const TIMEOUTS = {
   /** Cleanup timeout */
   CLEANUP: 5000,
 } as const;
+
+/**
+ * Optimization configuration for API efficiency.
+ * These settings help reduce API requests while maintaining quality.
+ */
+export const OPTIMIZATION_CONFIG = {
+  /** Enable response caching for identical requests */
+  ENABLE_RESPONSE_CACHE: true,
+  /** Cache time-to-live in milliseconds (5 minutes default) */
+  CACHE_TTL_MS: 5 * 60 * 1000,
+  /** Maximum number of cached responses */
+  MAX_CACHE_SIZE: 100,
+  /** Enable request deduplication for in-flight requests */
+  ENABLE_REQUEST_DEDUP: true,
+  /** Maximum retry attempts for failed requests (reduced from 3) */
+  MAX_RETRY_ATTEMPTS: 2,
+  /** Enable conversation history compression */
+  ENABLE_HISTORY_COMPRESSION: false, // Phase 2 feature
+  /** Maximum tokens in compressed history */
+  MAX_HISTORY_TOKENS: 8000,
+  /** Enable parallel tool execution */
+  ENABLE_PARALLEL_TOOLS: false, // Phase 3 feature
+  /** Cleanup interval for expired cache entries (30 seconds) */
+  CACHE_CLEANUP_INTERVAL_MS: 30000,
+} as const;
