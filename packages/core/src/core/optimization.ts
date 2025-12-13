@@ -66,3 +66,21 @@ export {
   resetAllRateLimiters,
   type RateLimiterOptions,
 } from './rateLimiter.js';
+
+// Model fallback
+export {
+  ModelFallbackManager,
+  getGlobalFallbackManager,
+  resetGlobalFallbackManager,
+  type ModelConfig,
+  type FallbackOptions,
+} from './modelFallback.js';
+
+// Session management
+export {
+  SessionManager,
+  getGlobalSessionManager,
+  resetGlobalSessionManager,
+  type SessionData,
+  type SessionStorageOptions,
+} from './sessionManager.js';
