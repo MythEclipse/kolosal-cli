@@ -232,11 +232,12 @@ export function getCoreSystemPrompt(
     const sandboxInfo = getSandboxInfo();
     const gitInfo = getGitInfo();
     const toolExamples = getToolCallExamples(model || '');
+    const codeGenPrompt = loadPrompt('code_generation_prompt.md');
 
     // Construct dynamic content block
     // We trim each part to ensure clean spacing
-    const dynamicContent = [sandboxInfo, gitInfo, toolExamples]
-      .filter(s => s.length > 0)
+    const dynamicContent = [sandboxInfo, gitInfo, toolExamples, codeGenPrompt]
+      .filter((s) => s.length > 0)
       .join('\n\n');
 
     basePrompt = basePrompt.replace('{{DYNAMIC_CONTENT}}', dynamicContent);

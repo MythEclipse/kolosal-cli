@@ -35,6 +35,7 @@ import { IdeConnectionEvent, IdeConnectionType } from '../telemetry/types.js';
 import { BatchEditTool } from '../tools/batch-edit.js';
 import { EditTool } from '../tools/edit.js';
 import { DiagnosticsTool } from '../tools/diagnostics.js';
+import { GenerateCodeTool } from '../tools/generate-code.js';
 import { ExitPlanModeTool } from '../tools/exitPlanMode.js';
 import { GlobTool } from '../tools/glob.js';
 import { GrepTool } from '../tools/grep.js';
@@ -1088,6 +1089,7 @@ export class Config {
     registerCoreTool(ExitPlanModeTool, this);
     registerCoreTool(WebFetchTool, this);
     registerCoreTool(DiagnosticsTool, this);
+    registerCoreTool(GenerateCodeTool, this);
     // Conditionally register web search tool only if Tavily API key is set
     if (this.getTavilyApiKey()) {
       registerCoreTool(WebSearchTool, this);

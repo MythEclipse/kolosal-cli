@@ -66,4 +66,7 @@ export enum ToolErrorType {
 
   // WebSearch-specific Errors
   WEB_SEARCH_FAILED = 'web_search_failed',
+
+  // Code Generation Errors
+  CODE_GENERATION_FAILURE = 'code_generation_failure',
 }

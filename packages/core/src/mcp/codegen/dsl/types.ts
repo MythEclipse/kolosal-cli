@@ -14,6 +14,22 @@ export interface TypeDef {
   generic?: string; // e.g., "T" or "T, K"
   fields: FieldMap;
   exported?: boolean;
+  jsdoc?: string;
+}
+
+export interface EnumDef {
+  name: string;
+  values: string[] | Record<string, string | number>;
+  exported?: boolean;
+  jsdoc?: string;
+}
+
+export interface TypeAliasDef {
+  name: string;
+  value: string;
+  generic?: string;
+  exported?: boolean;
+  jsdoc?: string;
 }
 
 export interface ParamDef {
@@ -29,6 +45,7 @@ export interface FunctionDef {
   body: string;
   async?: boolean;
   exported?: boolean;
+  jsdoc?: string;
 }
 
 export interface MethodDef {
@@ -36,6 +53,13 @@ export interface MethodDef {
   returns?: TypeNotation;
   body: string;
   async?: boolean;
+  static?: boolean;
+  jsdoc?: string;
+}
+
+export interface ConstructorDef {
+  params: FieldMap;
+  body: string;
 }
 
 export interface ClassDef {
@@ -43,8 +67,11 @@ export interface ClassDef {
   extends?: string;
   implements?: string[];
   props?: FieldMap;
+  staticProps?: FieldMap;
+  constructor?: ConstructorDef;
   methods?: Record<string, MethodDef>;
   exported?: boolean;
+  jsdoc?: string;
 }
 
 export interface ImportDef {
@@ -58,6 +85,7 @@ export interface ConstDef {
   type?: TypeNotation;
   value: string;
   exported?: boolean;
+  jsdoc?: string;
 }
 
 export interface FileDef {
@@ -68,3 +96,4 @@ export interface FileDef {
   classes: ClassDef[];
   constants: ConstDef[];
 }
+
