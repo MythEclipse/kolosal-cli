@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { SubagentConfig } from '../subagents/types.js';
+import type { SubagentConfig } from '../../subagents/types.js';
 
 /**
  * Base interface for specialized agents

@@ -40,7 +40,7 @@ const STAGE_AGENTS: Record<WorkflowStage, SpecializedAgent | null> = {
  * Integration layer for executing specialized agents through SubAgentScope.
  */
 export class OrchestratorIntegration {
-  constructor(private readonly _config: Config) {}
+  constructor(private readonly config: Config) {}
 
   /**
    * Execute a specialized agent for a workflow stage
@@ -124,6 +124,13 @@ export class OrchestratorIntegration {
    */
   hasAgent(stage: WorkflowStage): boolean {
     return STAGE_AGENTS[stage] !== null;
+  }
+
+  /**
+   * Get runtime config
+   */
+  getConfig(): Config {
+    return this.config;
   }
 }
 

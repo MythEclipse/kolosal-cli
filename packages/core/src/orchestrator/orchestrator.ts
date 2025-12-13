@@ -17,7 +17,6 @@ import {
 import {
   type SpecializedAgent,
   ALL_AGENTS,
-  getAgent,
   PlannerAgent,
   ArchitectAgent,
   DesignPatternAgent,
@@ -188,8 +187,8 @@ export class CodingOrchestrator {
   ): Promise<{ output: string; artifacts?: Map<string, unknown> }> {
     this.log(`Running agent: ${agent.displayName}`, context);
 
-    // Build context message for agent
-    const contextMessage = this.buildAgentContext(agent, context);
+    // Build context message for agent (used in future integration)
+    this.buildAgentContext(agent, context);
 
     // TODO: Integrate with actual subagent execution
     // For now, return placeholder
@@ -447,6 +446,13 @@ export class CodingOrchestrator {
    */
   getAgentForStage(stage: WorkflowStage): SpecializedAgent | null {
     return STAGE_AGENTS[stage];
+  }
+
+  /**
+   * Get runtime configuration
+   */
+  getRuntimeConfig(): Config {
+    return this.runtimeConfig;
   }
 
   /**

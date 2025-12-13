@@ -213,6 +213,13 @@ export class CircuitBreaker {
   }
 
   /**
+   * Get timestamp of last failure
+   */
+  getLastFailure(): number {
+    return this.lastFailure;
+  }
+
+  /**
    * Force close the circuit (for manual recovery)
    */
   forceClose(): void {
