@@ -59,24 +59,30 @@ export function handleAutoUpdate(
     errorOutput += data.toString();
   });
 
-  (updateProcess as NodeJS.EventEmitter).on('close', (code: number | null) => {
-    if (code === 0) {
-      updateEventEmitter.emit('update-success', {
-        message:
-          'Update successful! The new version will be used on your next run.',
-      });
-    } else {
-      updateEventEmitter.emit('update-failed', {
-        message: `Automatic update failed. Please try updating manually. (command: ${updateCommand}, stderr: ${errorOutput.trim()})`,
-      });
-    }
-  });
+  (updateProcess as unknown as NodeJS.EventEmitter).on(
+    'close',
+    (code: number | null) => {
+      if (code === 0) {
+        updateEventEmitter.emit('update-success', {
+          message:
+            'Update successful! The new version will be used on your next run.',
+        });
+      } else {
+        updateEventEmitter.emit('update-failed', {
+          message: `Automatic update failed. Please try updating manually. (command: ${updateCommand}, stderr: ${errorOutput.trim()})`,
+        });
+      }
+    },
+  );
 
-  (updateProcess as NodeJS.EventEmitter).on('error', (err: Error) => {
-    updateEventEmitter.emit('update-failed', {
-      message: `Automatic update failed. Please try updating manually. (error: ${err.message})`,
-    });
-  });
+  (updateProcess as unknown as NodeJS.EventEmitter).on(
+    'error',
+    (err: Error) => {
+      updateEventEmitter.emit('update-failed', {
+        message: `Automatic update failed. Please try updating manually. (error: ${err.message})`,
+      });
+    },
+  );
   return updateProcess;
 }
 

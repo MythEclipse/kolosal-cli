@@ -325,7 +325,7 @@ export async function start_sandbox(
         proxyProcess.stderr?.on('data', (data) => {
           console.error(data.toString());
         });
-        (proxyProcess as NodeJS.EventEmitter).on(
+        (proxyProcess as any).on(
           'close',
           (code: number | null, signal: string | null) => {
             if (sandboxProcess?.pid) {
@@ -346,7 +346,7 @@ export async function start_sandbox(
         stdio: 'inherit',
       });
       await new Promise((resolve) =>
-        (sandboxProcess as NodeJS.EventEmitter)?.on('close', resolve),
+        (sandboxProcess as any)?.on('close', resolve),
       );
       return;
     }
@@ -773,7 +773,7 @@ export async function start_sandbox(
       proxyProcess.stderr?.on('data', (data) => {
         console.error(data.toString().trim());
       });
-      (proxyProcess as NodeJS.EventEmitter).on(
+      (proxyProcess as any).on(
         'close',
         (code: number | null, signal: string | null) => {
           if (sandboxProcess?.pid) {
@@ -800,12 +800,12 @@ export async function start_sandbox(
       stdio: 'inherit',
     });
 
-    (sandboxProcess as NodeJS.EventEmitter).on('error', (err: Error) => {
+    (sandboxProcess as any).on('error', (err: Error) => {
       console.error('Sandbox process error:', err);
     });
 
     await new Promise<void>((resolve) => {
-      (sandboxProcess as NodeJS.EventEmitter)?.on(
+      (sandboxProcess as any)?.on(
         'close',
         (code: number | null, signal: string | null) => {
           if (code !== 0) {
@@ -835,14 +835,14 @@ async function imageExists(sandbox: string, image: string): Promise<boolean> {
       });
     }
 
-    checkProcess.on('error', (err) => {
+    (checkProcess as any).on('error', (err: any) => {
       console.warn(
         `Failed to start '${sandbox}' command for image check: ${err.message}`,
       );
       resolve(false);
     });
 
-    checkProcess.on('close', (code) => {
+    (checkProcess as any).on('close', (code: any) => {
       // Non-zero code might indicate docker daemon not running, etc.
       // The primary success indicator is non-empty stdoutData.
       if (code !== 0) {
@@ -902,8 +902,8 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
       if (pullProcess.stderr) {
         pullProcess.stderr.removeListener('data', onStderrData);
       }
-      pullProcess.removeListener('error', onError);
-      pullProcess.removeListener('close', onClose);
+      (pullProcess as any).removeListener('error', onError);
+      (pullProcess as any).removeListener('close', onClose);
       if (pullProcess.connected) {
         pullProcess.disconnect();
       }
@@ -915,8 +915,8 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
     if (pullProcess.stderr) {
       pullProcess.stderr.on('data', onStderrData);
     }
-    pullProcess.on('error', onError);
-    pullProcess.on('close', onClose);
+    (pullProcess as any).on('error', onError);
+    (pullProcess as any).on('close', onClose);
   });
 }
 
