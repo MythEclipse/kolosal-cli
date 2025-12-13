@@ -113,6 +113,8 @@ export { OAuthUtils } from './mcp/oauth-utils.js';
 export * from './mcp/codegen/types.js';
 export * from './mcp/codegen/McpToolDefinition.js';
 export * from './mcp/codegen/McpServerGenerator.js';
+export * from './mcp/codegen/simplified.js';
+export * from './mcp/codegen/dsl/index.js';
 
 // Export telemetry functions
 export * from './telemetry/index.js';

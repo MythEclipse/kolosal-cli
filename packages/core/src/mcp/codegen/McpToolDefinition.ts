@@ -6,6 +6,8 @@
 
 import { z } from 'zod';
 import type { McpToolConfig } from './types.js';
+import type { ShorthandSchema } from './simplified.js';
+import { fromShorthand } from './simplified.js';
 
 export class McpToolDefinition {
   private config: Partial<McpToolConfig> = {};
@@ -21,6 +23,11 @@ export class McpToolDefinition {
 
   schema(schema: z.ZodType<any>): this {
     this.config.schema = schema;
+    return this;
+  }
+
+  args(args: ShorthandSchema): this {
+    this.config.schema = fromShorthand(args);
     return this;
   }
 
