@@ -43,3 +43,9 @@ export {
   getGlobalOrchestrator,
   resetGlobalOrchestrator,
 } from './orchestrator.js';
+
+// Integration
+export {
+  OrchestratorIntegration,
+  createOrchestratorIntegration,
+} from './integration.js';
