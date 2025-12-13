@@ -235,3 +235,6 @@ export class UiTelemetryService extends EventEmitter {
 }
 
 export const uiTelemetryService = new UiTelemetryService();
+
+// Generate a unique session ID for this CLI instance
+export const sessionId = crypto.randomUUID();

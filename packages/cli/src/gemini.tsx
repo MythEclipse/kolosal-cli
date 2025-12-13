@@ -120,7 +120,7 @@ async function relaunchWithAdditionalArgs(additionalArgs: string[]) {
     env: newEnv,
   });
 
-  await new Promise((resolve) => child.on('close', resolve));
+  await new Promise((resolve) => (child as NodeJS.EventEmitter).on('close', resolve));
   process.exit(EXIT_CODES.SUCCESS);
 }
 

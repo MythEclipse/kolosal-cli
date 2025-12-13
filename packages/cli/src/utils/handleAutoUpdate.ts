@@ -59,7 +59,7 @@ export function handleAutoUpdate(
     errorOutput += data.toString();
   });
 
-  updateProcess.on('close', (code) => {
+  (updateProcess as NodeJS.EventEmitter).on('close', (code: number | null) => {
     if (code === 0) {
       updateEventEmitter.emit('update-success', {
         message:
@@ -72,7 +72,7 @@ export function handleAutoUpdate(
     }
   });
 
-  updateProcess.on('error', (err) => {
+  (updateProcess as NodeJS.EventEmitter).on('error', (err: Error) => {
     updateEventEmitter.emit('update-failed', {
       message: `Automatic update failed. Please try updating manually. (error: ${err.message})`,
     });

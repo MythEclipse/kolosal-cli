@@ -39,6 +39,20 @@ async function buildKolosalServer() {
     );
   }
 
+  // Check if CMakeLists.txt exists (source code present)
+  const cmakeListsPath = path.join(kolosalServerDir, 'CMakeLists.txt');
+  try {
+    await fs.access(cmakeListsPath);
+    console.log('✅ Found CMakeLists.txt');
+  } catch (error) {
+    console.log('⚠️  CMakeLists.txt not found in kolosal-server directory.');
+    console.log('   kolosal-server source code is not available.');
+    console.log(
+      '   Skipping kolosal-server build - this component is optional.',
+    );
+    return null;
+  }
+
   if (isLinux) {
     console.log(
       '🐧 Linux detected: Building both CPU and Vulkan inference engines...\n',

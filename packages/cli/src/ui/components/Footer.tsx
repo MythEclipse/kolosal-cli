@@ -125,6 +125,11 @@ export const Footer: React.FC<FooterProps> = ({
         <Text color={theme.text.accent}>
           {isNarrow ? '' : ' '}
           {model}
+          {promptTokenCount > 0 && (
+            <Text color={theme.text.secondary}>
+              {' '}({promptTokenCount.toLocaleString()})
+            </Text>
+          )}
         </Text>
         {corgiMode && (
           <Text>

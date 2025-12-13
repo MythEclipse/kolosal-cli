@@ -46,7 +46,8 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     geminiMdFileCount === 0 &&
     mcpServerCount === 0 &&
     blockedMcpServerCount === 0 &&
-    openFileCount === 0
+    openFileCount === 0 &&
+    (promptTokenCount === undefined || !model)
   ) {
     return <Text> </Text>; // Render an empty space to reserve height
   }
@@ -55,9 +56,8 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     if (openFileCount === 0) {
       return '';
     }
-    return `${openFileCount} open file${
-      openFileCount > 1 ? 's' : ''
-    } (ctrl+g to view)`;
+    return `${openFileCount} open file${openFileCount > 1 ? 's' : ''
+      } (ctrl+g to view)`;
   })();
 
   const geminiMdText = (() => {
@@ -66,9 +66,8 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     }
     const allNamesTheSame = new Set(contextFileNames).size < 2;
     const name = allNamesTheSame ? contextFileNames[0] : 'context';
-    return `${geminiMdFileCount} ${name} file${
-      geminiMdFileCount > 1 ? 's' : ''
-    }`;
+    return `${geminiMdFileCount} ${name} file${geminiMdFileCount > 1 ? 's' : ''
+      }`;
   })();
 
   const mcpText = (() => {
@@ -115,9 +114,9 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
         ))}
         {promptTokenCount !== undefined && model && (
           <Box marginLeft={2} marginTop={1}>
-            <ContextUsageDisplay 
-              promptTokenCount={promptTokenCount} 
-              model={model} 
+            <ContextUsageDisplay
+              promptTokenCount={promptTokenCount}
+              model={model}
             />
           </Box>
         )}
@@ -135,9 +134,9 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
       </Box>
       {promptTokenCount !== undefined && model && (
         <Box marginLeft={2}>
-          <ContextUsageDisplay 
-            promptTokenCount={promptTokenCount} 
-            model={model} 
+          <ContextUsageDisplay
+            promptTokenCount={promptTokenCount}
+            model={model}
           />
         </Box>
       )}

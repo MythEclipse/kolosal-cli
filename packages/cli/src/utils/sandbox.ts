@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { exec, execSync, spawn, type ChildProcess } from 'node:child_process';
+import { exec, execSync, spawn, ChildProcess } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -325,14 +325,17 @@ export async function start_sandbox(
         proxyProcess.stderr?.on('data', (data) => {
           console.error(data.toString());
         });
-        proxyProcess.on('close', (code, signal) => {
-          if (sandboxProcess?.pid) {
-            process.kill(-sandboxProcess.pid, 'SIGTERM');
-          }
-          throw new FatalSandboxError(
-            `Proxy command '${proxyCommand}' exited with code ${code}, signal ${signal}`,
-          );
-        });
+        (proxyProcess as NodeJS.EventEmitter).on(
+          'close',
+          (code: number | null, signal: string | null) => {
+            if (sandboxProcess?.pid) {
+              process.kill(-sandboxProcess.pid, 'SIGTERM');
+            }
+            throw new FatalSandboxError(
+              `Proxy command '${proxyCommand}' exited with code ${code}, signal ${signal}`,
+            );
+          },
+        );
         console.log('waiting for proxy to start ...');
         await execAsync(
           `until timeout 0.25 curl -s http://localhost:8877; do sleep 0.25; done`,
@@ -342,7 +345,9 @@ export async function start_sandbox(
       sandboxProcess = spawn(config.command, args, {
         stdio: 'inherit',
       });
-      await new Promise((resolve) => sandboxProcess?.on('close', resolve));
+      await new Promise((resolve) =>
+        (sandboxProcess as NodeJS.EventEmitter)?.on('close', resolve),
+      );
       return;
     }
 
@@ -768,14 +773,17 @@ export async function start_sandbox(
       proxyProcess.stderr?.on('data', (data) => {
         console.error(data.toString().trim());
       });
-      proxyProcess.on('close', (code, signal) => {
-        if (sandboxProcess?.pid) {
-          process.kill(-sandboxProcess.pid, 'SIGTERM');
-        }
-        throw new FatalSandboxError(
-          `Proxy container command '${proxyContainerCommand}' exited with code ${code}, signal ${signal}`,
-        );
-      });
+      (proxyProcess as NodeJS.EventEmitter).on(
+        'close',
+        (code: number | null, signal: string | null) => {
+          if (sandboxProcess?.pid) {
+            process.kill(-sandboxProcess.pid, 'SIGTERM');
+          }
+          throw new FatalSandboxError(
+            `Proxy container command '${proxyContainerCommand}' exited with code ${code}, signal ${signal}`,
+          );
+        },
+      );
       console.log('waiting for proxy to start ...');
       await execAsync(
         `until timeout 0.25 curl -s http://localhost:8877; do sleep 0.25; done`,
@@ -792,19 +800,22 @@ export async function start_sandbox(
       stdio: 'inherit',
     });
 
-    sandboxProcess.on('error', (err) => {
+    (sandboxProcess as NodeJS.EventEmitter).on('error', (err: Error) => {
       console.error('Sandbox process error:', err);
     });
 
     await new Promise<void>((resolve) => {
-      sandboxProcess?.on('close', (code, signal) => {
-        if (code !== 0) {
-          console.log(
-            `Sandbox process exited with code: ${code}, signal: ${signal}`,
-          );
-        }
-        resolve();
-      });
+      (sandboxProcess as NodeJS.EventEmitter)?.on(
+        'close',
+        (code: number | null, signal: string | null) => {
+          if (code !== 0) {
+            console.log(
+              `Sandbox process exited with code: ${code}, signal: ${signal}`,
+            );
+          }
+          resolve();
+        },
+      );
     });
   } finally {
     patcher.cleanup();
@@ -815,7 +826,7 @@ export async function start_sandbox(
 async function imageExists(sandbox: string, image: string): Promise<boolean> {
   return new Promise((resolve) => {
     const args = ['images', '-q', image];
-    const checkProcess = spawn(sandbox, args);
+    const checkProcess = spawn(sandbox, args) as ChildProcess;
 
     let stdoutData = '';
     if (checkProcess.stdout) {
@@ -846,7 +857,7 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
   console.info(`Attempting to pull image ${image} using ${sandbox}...`);
   return new Promise((resolve) => {
     const args = ['pull', image];
-    const pullProcess = spawn(sandbox, args, { stdio: 'pipe' });
+    const pullProcess = spawn(sandbox, args, { stdio: 'pipe' }) as ChildProcess;
 
     let stderrData = '';
 

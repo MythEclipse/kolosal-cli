@@ -434,22 +434,25 @@ export class KolosalServerManager {
 
     let processErrorOccurred = false;
 
-    this.process.on('error', (error) => {
+    (this.process as NodeJS.EventEmitter).on('error', (error: Error) => {
       processErrorOccurred = true;
       this.debug(`Server process error: ${error}`);
       this.status = ServerStatus.ERROR;
       this.cleanup();
     });
 
-    this.process.on('exit', (code, signal) => {
-      this.debug(`Server process exited with code ${code}, signal ${signal}`);
-      if (this.status === ServerStatus.RUNNING) {
-        this.status = ServerStatus.ERROR;
-      } else if (this.status === ServerStatus.STOPPING) {
-        this.status = ServerStatus.STOPPED;
-      }
-      this.cleanup();
-    });
+    (this.process as NodeJS.EventEmitter).on(
+      'exit',
+      (code: number | null, signal: string | null) => {
+        this.debug(`Server process exited with code ${code}, signal ${signal}`);
+        if (this.status === ServerStatus.RUNNING) {
+          this.status = ServerStatus.ERROR;
+        } else if (this.status === ServerStatus.STOPPING) {
+          this.status = ServerStatus.STOPPED;
+        }
+        this.cleanup();
+      },
+    );
 
     // Give the process a moment to start
     await setTimeout(500);

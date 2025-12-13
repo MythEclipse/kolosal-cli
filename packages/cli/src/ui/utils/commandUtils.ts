@@ -53,8 +53,8 @@ export const copyToClipboard = async (text: string): Promise<void> => {
       if (child.stderr) {
         child.stderr.on('data', (chunk) => (stderr += chunk.toString()));
       }
-      child.on('error', reject);
-      child.on('close', (code) => {
+      (child as NodeJS.EventEmitter).on('error', reject);
+      (child as NodeJS.EventEmitter).on('close', (code: number | null) => {
         if (code === 0) return resolve();
         const errorMsg = stderr.trim();
         reject(
