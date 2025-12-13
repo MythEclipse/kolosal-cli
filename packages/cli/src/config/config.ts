@@ -32,6 +32,7 @@ import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 import { extensionsCommand } from '../commands/extensions.js';
 import { mcpCommand } from '../commands/mcp.js';
+import { configCommand } from '../commands/config.js';
 import type { Settings } from './settings.js';
 
 import { resolvePath } from '../utils/resolvePath.js';
@@ -128,7 +129,7 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
     .locale('en')
     .scriptName('kolosal')
     .usage(
-      'Usage: kolosal [options] [command]\n\nKolosal Cli - Launch an interactive CLI, use -p/--prompt for non-interactive mode',
+      'Usage: kolosal [options] [command]\n\nKolosal Cli - Launch an interactive CLI, use -p/--prompt for non-interactive mode.\n\nOnce inside the interactive shell, use /help to see available slash commands.',
     )
     .command('$0', 'Launch Kolosal Cli', (yargsInstance) =>
       yargsInstance
@@ -296,18 +297,22 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         })
         .option('server-only', {
           type: 'boolean',
-          description: 'Run in server-only mode (no interactive UI). Ideal for desktop app integration.',
+          description:
+            'Run in server-only mode (no interactive UI). Ideal for desktop app integration.',
           default: false,
         })
         .option('no_ui_output', {
           type: 'boolean',
-          description: 'Disable all UI output and run silently. Use with --server-only for headless operation.',
+          description:
+            'Disable all UI output and run silently. Use with --server-only for headless operation.',
           default: false,
         })
         .option('api-port', {
           type: 'number',
           description: 'Port for the API server to listen on.',
-          default: process.env['KOLOSAL_CLI_API_PORT'] ? Number(process.env['KOLOSAL_CLI_API_PORT']) : undefined,
+          default: process.env['KOLOSAL_CLI_API_PORT']
+            ? Number(process.env['KOLOSAL_CLI_API_PORT'])
+            : undefined,
         })
         .option('api-host', {
           type: 'string',
@@ -329,7 +334,9 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
         }),
     )
     // Register MCP subcommands
-    .command(mcpCommand);
+    .command(mcpCommand)
+    // Register config command
+    .command(configCommand);
 
   if (settings?.experimental?.extensionManagement ?? false) {
     yargsInstance.command(extensionsCommand);
@@ -350,7 +357,9 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
   // and not return to main CLI logic
   if (
     result._.length > 0 &&
-    (result._[0] === 'mcp' || result._[0] === 'extensions')
+    (result._[0] === 'mcp' ||
+      result._[0] === 'extensions' ||
+      result._[0] === 'config')
   ) {
     // MCP commands handle their own execution and process exit
     process.exit(0);
