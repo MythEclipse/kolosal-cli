@@ -48,7 +48,7 @@ const getRateLimitErrorMessageGoogleGenericQuotaPaid = (
   currentModel: string = DEFAULT_GEMINI_MODEL,
 ) =>
   `\nYou have reached your daily quota limit. To continue accessing the ${currentModel} model today, consider using /auth to switch to using an OpenAI API key from https://platform.openai.com/account/api-keys`;
-const RATE_LIMIT_ERROR_MESSAGE_OPENAI =
+const _RATE_LIMIT_ERROR_MESSAGE_OPENAI =
   '\nPlease wait and try again later. Check your OpenAI usage limits or try a different model.';
 const getRateLimitErrorMessageDefault = (
   fallbackModel: string = DEFAULT_GEMINI_FLASH_MODEL,
@@ -90,8 +90,6 @@ function getRateLimitMessage(
           : getRateLimitErrorMessageGoogleFree(fallbackModel);
       }
     }
-    case AuthType.USE_OPENAI:
-      return RATE_LIMIT_ERROR_MESSAGE_OPENAI;
     default:
       return getRateLimitErrorMessageDefault(fallbackModel);
   }

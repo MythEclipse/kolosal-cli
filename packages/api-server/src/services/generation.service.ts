@@ -192,7 +192,7 @@ export class GenerationService {
     onContentChunk?: ContentStreamCallback,
     onEvent?: StreamEventCallback,
   ): Promise<GenerationResult> {
-    let allMessages: Content[] = [...conversationHistory];
+    const allMessages: Content[] = [...conversationHistory];
     
     // Add the new user message
     const userMessage: Content = {

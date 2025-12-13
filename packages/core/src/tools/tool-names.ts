@@ -16,7 +16,7 @@ export enum ToolNames {
   EDIT = 'replace',
   BATCH_EDIT = 'batch_replace',
   RUN_SHELL_COMMAND = 'run_shell_command',
-  SHELL = 'run_shell_command',
+  SHELL = 'shell',
   TODO_WRITE = 'todo_write',
   GREP = 'grep',
   GLOB = 'glob',

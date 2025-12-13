@@ -138,11 +138,8 @@ describe('mcp-client', () => {
       await client.connect();
       await client.discover();
       expect(mockedToolRegistry.registerTool).toHaveBeenCalledOnce();
-      expect(consoleWarnSpy).toHaveBeenCalledOnce();
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        `Skipping tool 'invalidTool' from MCP server 'test-server' because it has ` +
-          `missing types in its parameter schema. Please file an issue with the owner of the MCP server.`,
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledExactlyOnceWith(`Skipping tool 'invalidTool' from MCP server 'test-server' because it has ` +
+          `missing types in its parameter schema. Please file an issue with the owner of the MCP server.`);
       consoleWarnSpy.mockRestore();
     });
 

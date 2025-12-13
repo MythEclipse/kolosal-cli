@@ -251,7 +251,7 @@ export class CircuitBreaker {
 export class CircuitOpenError extends Error {
   constructor(
     message: string,
-    public readonly timeUntilReset: number,
+    readonly timeUntilReset: number,
   ) {
     super(message);
     this.name = 'CircuitOpenError';

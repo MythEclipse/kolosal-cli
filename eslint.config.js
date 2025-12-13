@@ -223,6 +223,39 @@ export default tseslint.config(
   },
   // Prettier config must be last
   prettierConfig,
+  // Browser environment for desktop package
+  {
+    files: ['packages/desktop/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.es2021,
+        document: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+  // Vite config files need process
+  {
+    files: ['**/vite.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
   // extra settings for scripts that we run directly with node
   {
     files: ['./integration-tests/**/*.js'],

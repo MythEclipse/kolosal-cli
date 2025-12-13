@@ -6,7 +6,7 @@
 
 
 import type { OAuth2Client } from 'google-auth-library';
-import { UserTierId } from './types.js';
+import type { UserTierId } from './types.js';
 
 export class ProjectIdRequiredError extends Error {
   constructor() {

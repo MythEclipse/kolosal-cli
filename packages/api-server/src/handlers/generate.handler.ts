@@ -6,7 +6,7 @@
 
 import type { RouteHandler, HttpContext, GenerateRequest } from '../types/index.js';
 import { HttpUtils } from '../utils/http.js';
-import { GenerationService } from '../services/generation.service.js';
+import type { GenerationService } from '../services/generation.service.js';
 
 export class GenerateHandler implements RouteHandler {
   constructor(private generationService: GenerationService) {}

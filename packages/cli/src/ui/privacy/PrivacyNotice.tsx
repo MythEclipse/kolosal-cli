@@ -19,10 +19,10 @@ const PrivacyNoticeText = ({
 }: {
   config: Config;
   onExit: () => void;
-}) => {
+}) => 
   // Only OpenAI authentication is supported now
-  return <CloudFreePrivacyNotice config={config} onExit={onExit} />;
-};
+   <CloudFreePrivacyNotice config={config} onExit={onExit} />
+;
 
 export const PrivacyNotice = ({ onExit, config }: PrivacyNoticeProps) => (
   <LeftBorderPanel

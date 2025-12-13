@@ -84,7 +84,7 @@ export async function retryWithBackoff<T>(
 
   let attempt = 0;
   let currentDelay = initialDelayMs;
-  let consecutive429Count = 0;
+  let _consecutive429Count = 0;
 
   while (attempt < maxAttempts) {
     attempt++;
@@ -101,9 +101,9 @@ export async function retryWithBackoff<T>(
 
       // Track consecutive 429 errors
       if (errorStatus === 429) {
-        consecutive429Count++;
+        _consecutive429Count++;
       } else {
-        consecutive429Count = 0;
+        _consecutive429Count = 0;
       }
 
       // If we have persistent 429s and a fallback callback for OAuth

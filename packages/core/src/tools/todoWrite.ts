@@ -417,8 +417,7 @@ export class TodoWriteTool extends BaseDeclarativeTool<
     }
 
     // Filter out invalid todos and keep only valid ones
-    const validTodos = params.todos.filter((todo) => {
-      return (
+    const validTodos = params.todos.filter((todo) => (
         todo &&
         typeof todo === 'object' &&
         todo.id &&
@@ -428,8 +427,7 @@ export class TodoWriteTool extends BaseDeclarativeTool<
         typeof todo.content === 'string' &&
         todo.content.trim() !== '' &&
         ['pending', 'in_progress', 'completed'].includes(todo.status)
-      );
-    });
+      ));
 
     // Update params with only valid todos
     params.todos = validTodos;
