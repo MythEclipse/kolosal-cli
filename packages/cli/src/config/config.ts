@@ -33,6 +33,8 @@ import yargs from 'yargs/yargs';
 import { extensionsCommand } from '../commands/extensions.js';
 import { mcpCommand } from '../commands/mcp.js';
 import { configCommand } from '../commands/config.js';
+import { initCommand } from '../commands/init.js';
+import { doctorCommand } from '../commands/doctor.js';
 import type { Settings } from './settings.js';
 
 import { resolvePath } from '../utils/resolvePath.js';
@@ -336,7 +338,11 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
     // Register MCP subcommands
     .command(mcpCommand)
     // Register config command
-    .command(configCommand);
+    .command(configCommand)
+    // Register init command
+    .command(initCommand)
+    // Register doctor command
+    .command(doctorCommand);
 
   if (settings?.experimental?.extensionManagement ?? false) {
     yargsInstance.command(extensionsCommand);
@@ -359,7 +365,9 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
     result._.length > 0 &&
     (result._[0] === 'mcp' ||
       result._[0] === 'extensions' ||
-      result._[0] === 'config')
+      result._[0] === 'config' ||
+      result._[0] === 'init' ||
+      result._[0] === 'doctor')
   ) {
     // MCP commands handle their own execution and process exit
     process.exit(0);
