@@ -23,4 +23,5 @@ export enum ToolNames {
   TASK = 'task',
   MEMORY = 'save_memory',
   EXIT_PLAN_MODE = 'exit_plan_mode',
+  DIAGNOSTICS = 'diagnostics',
 }

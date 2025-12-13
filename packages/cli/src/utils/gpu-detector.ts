@@ -177,7 +177,7 @@ async function detectWindowsGPUs(result: GPUDetectionResult): Promise<void> {
           const gpu: GPUInfo = {
             vendor: detectVendorFromName(name),
             name,
-            memory: memory && memory !== '' ? `${Math.round(parseInt(memory) / 1024 / 1024)} MB` : undefined,
+            memory: memory && memory !== '' ? `${Math.round(parseInt(memory, 10) / 1024 / 1024)} MB` : undefined,
             vulkanSupported: await checkVulkanSupport(),
             dedicated: !name.toLowerCase().includes('intel') || name.toLowerCase().includes('arc')
           };

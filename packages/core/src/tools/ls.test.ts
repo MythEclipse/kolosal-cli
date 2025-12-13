@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -125,7 +126,7 @@ describe('LSTool', () => {
         size: 1024,
       };
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         const pathStr = path.toString();
         if (pathStr === testPath) {
           return { isDirectory: () => true } as fs.Stats;
@@ -152,7 +153,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/other-project/lib';
       const mockFiles = ['module1.js', 'module2.js'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         if (path.toString() === testPath) {
           return { isDirectory: () => true } as fs.Stats;
         }
@@ -194,7 +195,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/project/src';
       const mockFiles = ['test.js', 'test.spec.js', 'index.js'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         const pathStr = path.toString();
         if (pathStr === testPath) {
           return { isDirectory: () => true } as fs.Stats;
@@ -223,7 +224,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/project/src';
       const mockFiles = ['file1.js', 'file2.js', 'ignored.js'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         const pathStr = path.toString();
         if (pathStr === testPath) {
           return { isDirectory: () => true } as fs.Stats;
@@ -252,7 +253,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/project/src';
       const mockFiles = ['file1.js', 'file2.js', 'private.js'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         const pathStr = path.toString();
         if (pathStr === testPath) {
           return { isDirectory: () => true } as fs.Stats;
@@ -311,7 +312,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/project/src';
       const mockFiles = ['z-file.ts', 'a-dir', 'b-file.ts', 'c-dir'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         if (path.toString() === testPath) {
           return { isDirectory: () => true } as fs.Stats;
         }
@@ -373,7 +374,7 @@ describe('LSTool', () => {
       const testPath = '/home/user/project/src';
       const mockFiles = ['accessible.ts', 'inaccessible.ts'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         if (path.toString() === testPath) {
           return { isDirectory: () => true } as fs.Stats;
         }
@@ -465,7 +466,7 @@ describe('LSTool', () => {
       const testPath = `${mockSecondaryDir}/tests`;
       const mockFiles = ['test1.spec.ts', 'test2.spec.ts'];
 
-      vi.mocked(fs.statSync).mockImplementation((path: any) => {
+      vi.mocked(fs.statSync).mockImplementation((path: unknown) => {
         if (path.toString() === testPath) {
           return { isDirectory: () => true } as fs.Stats;
         }

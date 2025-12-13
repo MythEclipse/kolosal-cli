@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC

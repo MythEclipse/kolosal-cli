@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Kolosal
@@ -262,7 +263,7 @@ describe('useVisionAutoSwitch hook', () => {
     const parts: PartListUnion = [
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, Date.now(), true);
     });
@@ -280,7 +281,7 @@ describe('useVisionAutoSwitch hook', () => {
     const parts: PartListUnion = [
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 123, false);
     });
@@ -296,7 +297,7 @@ describe('useVisionAutoSwitch hook', () => {
     );
 
     const parts: PartListUnion = [{ text: 'no images here' }];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 456, false);
     });
@@ -316,7 +317,7 @@ describe('useVisionAutoSwitch hook', () => {
     ];
 
     const userTs = 1010;
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, userTs, false);
     });
@@ -344,7 +345,7 @@ describe('useVisionAutoSwitch hook', () => {
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
 
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 2020, false);
     });
@@ -378,7 +379,7 @@ describe('useVisionAutoSwitch hook', () => {
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
 
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 3030, false);
     });
@@ -407,7 +408,7 @@ describe('useVisionAutoSwitch hook', () => {
     const parts: PartListUnion = [
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 4040, false);
     });
@@ -425,7 +426,7 @@ describe('useVisionAutoSwitch hook', () => {
     const parts: PartListUnion = [
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 5050, false);
     });
@@ -448,7 +449,7 @@ describe('useVisionAutoSwitch hook', () => {
     const parts: PartListUnion = [
       { inlineData: { mimeType: 'image/png', data: '...' } },
     ];
-    let res: any;
+    let res: unknown;
     await act(async () => {
       res = await result.current.handleVisionSwitch(parts, 6060, false);
     });
@@ -478,7 +479,7 @@ describe('useVisionAutoSwitch hook', () => {
         { inlineData: { mimeType: 'image/png', data: '...' } },
       ];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 7070, false);
       });
@@ -513,7 +514,7 @@ describe('useVisionAutoSwitch hook', () => {
 
       const parts: PartListUnion = [{ text: 'no images here' }];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 8080, false);
       });
@@ -543,7 +544,7 @@ describe('useVisionAutoSwitch hook', () => {
         { inlineData: { mimeType: 'image/png', data: '...' } },
       ];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 9090, false);
       });
@@ -617,7 +618,7 @@ describe('useVisionAutoSwitch hook', () => {
         { inlineData: { mimeType: 'image/png', data: '...' } },
       ];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 11110, false);
       });
@@ -647,7 +648,7 @@ describe('useVisionAutoSwitch hook', () => {
         { inlineData: { mimeType: 'image/png', data: '...' } },
       ];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 12120, false);
       });
@@ -681,7 +682,7 @@ describe('useVisionAutoSwitch hook', () => {
         { text: 'Please analyze them.' },
       ];
 
-      let res: any;
+      let res: unknown;
       await act(async () => {
         res = await result.current.handleVisionSwitch(parts, 13130, false);
       });

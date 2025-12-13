@@ -80,9 +80,9 @@ export interface IndividualToolCallDisplay {
   callId: string;
   name: string;
   description: string;
-  resultDisplay: any | undefined; // Using any to match original ToolResultDisplay
+  resultDisplay: unknown | undefined; // Using any to match original ToolResultDisplay
   status: ToolCallStatus;
-  confirmationDetails: any | undefined;
+  confirmationDetails: unknown | undefined;
 }
 
 export interface HistoryItem {

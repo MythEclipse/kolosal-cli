@@ -88,9 +88,9 @@ export class GenerateHandler implements RouteHandler {
   private async handleStreamingResponse(
     input: string,
     promptId: string,
-    history: any,
+    history: unknown,
     signal: AbortSignal,
-    res: any,
+    res: unknown,
     enableCors: boolean,
     model?: string,
     apiKey?: string,
@@ -152,9 +152,9 @@ export class GenerateHandler implements RouteHandler {
   private async handleNonStreamingResponse(
     input: string,
     promptId: string,
-    history: any,
+    history: unknown,
     signal: AbortSignal,
-    res: any,
+    res: unknown,
     enableCors: boolean,
     model?: string,
     apiKey?: string,
@@ -191,7 +191,7 @@ export class GenerateHandler implements RouteHandler {
     );
   }
 
-  private cleanFinalText(finalText: string, transcript: any[]): string {
+  private cleanFinalText(finalText: string, transcript: unknown[]): string {
     if (!finalText) return finalText;
 
     let cleanedText = finalText;

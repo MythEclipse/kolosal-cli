@@ -80,8 +80,8 @@ export const createMockCommandContext = (
     },
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const merge = (target: any, source: any): any => {
+   
+  const merge = (target: unknown, source: unknown): unknown => {
     const output = { ...target };
 
     for (const key in source) {

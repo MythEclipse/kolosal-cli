@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -1130,8 +1131,8 @@ describe('CoreToolScheduler cancellation during executing with live output', () 
     const completedCalls = onAllToolCallsComplete.mock
       .calls[0][0] as ToolCall[];
     expect(completedCalls[0].status).toBe('cancelled');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const cancelled: any = completedCalls[0];
+     
+    const cancelled: unknown = completedCalls[0];
     expect(cancelled.response.resultDisplay).toBe('hello');
   });
 });

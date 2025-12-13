@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Kolosal
@@ -188,7 +189,7 @@ describe('OpenAIContentConverter', () => {
       // Content should be either string or array with text
       const userContent = (messages[0] as any).content;
       const textContent = typeof userContent === 'string' ? userContent : 
-        userContent.find((part: any) => part.type === 'text')?.text;
+        userContent.find((part: unknown) => part.type === 'text')?.text;
       expect(textContent).toBe('Hello');
 
       // Second message: assistant with tool call

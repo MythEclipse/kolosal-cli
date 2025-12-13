@@ -191,13 +191,13 @@ export const KolosalModelPickerDialog: React.FC<
               const isActive = absoluteIdx === cursor;
 
               // Helper to get field value with fallbacks for different naming conventions
-              const getModelName = (m: any) => 
+              const getModelName = (m: unknown) => 
                 m.name || m.model_name || m.modelName || 'Unknown Model';
-              const getInputPrice = (m: any) => 
+              const getInputPrice = (m: unknown) => 
                 m.pricing?.input ?? m.input_price_per_m_tokens ?? m.inputPricePerMTokens ?? m.inputPrice ?? 0;
-              const getOutputPrice = (m: any) => 
+              const getOutputPrice = (m: unknown) => 
                 m.pricing?.output ?? m.output_price_per_m_tokens ?? m.outputPricePerMTokens ?? m.outputPrice ?? 0;
-              const getContextSize = (m: any) => 
+              const getContextSize = (m: unknown) => 
                 m.contextSize ?? m.context_size ?? m.contextWindow ?? 0;
 
               // Name column

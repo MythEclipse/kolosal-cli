@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 import * as auth from '../config/auth.js';
 /**
  * @license

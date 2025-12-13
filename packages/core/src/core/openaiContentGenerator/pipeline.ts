@@ -247,7 +247,7 @@ export class ContentGenerationPipeline {
     const assistantMsgs = messages.filter(m => m.role === 'assistant' && 'tool_calls' in m);
     const toolMsgs = messages.filter(m => m.role === 'tool');
     if (assistantMsgs.length > 0 && toolMsgs.length > 0) {
-      const toolCallIds = assistantMsgs.flatMap(m => (m as any).tool_calls?.map((tc: any) => tc.id) || []);
+      const toolCallIds = assistantMsgs.flatMap(m => (m as any).tool_calls?.map((tc: unknown) => tc.id) || []);
       const toolResponseIds = toolMsgs.map(m => (m as any).tool_call_id);
       console.log('[DEBUG] Tool call IDs:', toolCallIds);
       console.log('[DEBUG] Tool response IDs:', toolResponseIds);
@@ -289,13 +289,13 @@ export class ContentGenerationPipeline {
       console.log('[DEBUG] Tool interaction messages:', JSON.stringify(toolRelatedMsgs.map(m => ({
         role: m.role,
         content: m.role === 'assistant' ? (m as any).content : undefined,
-        tool_calls: m.role === 'assistant' ? (m as any).tool_calls?.map((tc: any) => ({ id: tc.id, name: tc.function.name })) : undefined,
+        tool_calls: m.role === 'assistant' ? (m as any).tool_calls?.map((tc: unknown) => ({ id: tc.id, name: tc.function.name })) : undefined,
         tool_call_id: m.role === 'tool' ? (m as any).tool_call_id : undefined
       })), null, 2));
       
       // Also write to a temp file for easier debugging
       try {
-        const fs = require('fs');
+        import fs from 'fs';
         fs.writeFileSync('/tmp/kolosal-debug-messages.json', JSON.stringify(messages, null, 2));
         console.log('[DEBUG] Full messages written to /tmp/kolosal-debug-messages.json');
       } catch (e) {

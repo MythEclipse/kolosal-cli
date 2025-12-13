@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -675,7 +676,7 @@ describe('EditTool', () => {
   describe('IDE mode', () => {
     const testFile = 'edit_me.txt';
     let filePath: string;
-    let ideClient: any;
+    let ideClient: unknown;
 
     beforeEach(() => {
       filePath = path.join(rootDir, testFile);

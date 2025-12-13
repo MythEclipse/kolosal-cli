@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -15,8 +16,8 @@ describe('safeJsonStringify', () => {
   });
 
   it('should handle circular references by replacing them with [Circular]', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const obj: any = { name: 'test' };
+     
+    const obj: unknown = { name: 'test' };
     obj.circular = obj; // Create circular reference
 
     const result = safeJsonStringify(obj);
@@ -24,8 +25,8 @@ describe('safeJsonStringify', () => {
   });
 
   it('should handle complex circular structures like HttpsProxyAgent', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const agent: any = {
+     
+    const agent: unknown = {
       sockets: {},
       options: { host: 'example.com' },
     };
@@ -43,8 +44,8 @@ describe('safeJsonStringify', () => {
   });
 
   it('should handle circular references with formatting', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const obj: any = { name: 'test' };
+     
+    const obj: unknown = { name: 'test' };
     obj.circular = obj;
 
     const result = safeJsonStringify(obj, 2);
@@ -52,8 +53,8 @@ describe('safeJsonStringify', () => {
   });
 
   it('should handle arrays with circular references', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const arr: any[] = [{ id: 1 }];
+     
+    const arr: unknown[] = [{ id: 1 }];
     arr[0].parent = arr; // Create circular reference
 
     const result = safeJsonStringify(arr);

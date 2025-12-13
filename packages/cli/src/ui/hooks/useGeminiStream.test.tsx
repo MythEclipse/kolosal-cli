@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -43,7 +44,7 @@ const mockSendMessageStream = vi
 const mockStartChat = vi.fn();
 
 const MockedGeminiClientClass = vi.hoisted(() =>
-  vi.fn().mockImplementation(function (this: any, _config: any) {
+  vi.fn().mockImplementation(function (this: unknown, _config: unknown) {
     // _config
     this.startChat = mockStartChat;
     this.sendMessageStream = mockSendMessageStream;
@@ -254,7 +255,7 @@ describe('useGeminiStream', () => {
 
   const renderTestHook = (
     initialToolCalls: TrackedToolCall[] = [],
-    geminiClient?: any,
+    geminiClient?: unknown,
   ) => {
     let currentToolCalls = initialToolCalls;
     const setToolCalls = (newToolCalls: TrackedToolCall[]) => {
@@ -272,7 +273,7 @@ describe('useGeminiStream', () => {
 
     const { result, rerender } = renderHook(
       (props: {
-        client: any;
+        client: unknown;
         history: HistoryItem[];
         addItem: UseHistoryManagerReturn['addItem'];
         config: Config;
@@ -816,7 +817,7 @@ describe('useGeminiStream', () => {
   });
 
   describe('User Cancellation', () => {
-    let keypressCallback: (key: any) => void;
+    let keypressCallback: (key: unknown) => void;
     const mockUseKeypress = useKeypress as Mock;
 
     beforeEach(() => {

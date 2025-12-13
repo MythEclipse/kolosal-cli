@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -29,8 +30,8 @@ vi.mock('../../utils/openaiLogger.js', () => ({
 describe('OpenAIContentGenerator Timeout Handling', () => {
   let generator: OpenAIContentGenerator;
   let mockConfig: Config;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockOpenAIClient: any;
+   
+  let mockOpenAIClient: unknown;
   let mockProvider: OpenAICompatibleProvider;
 
   beforeEach(() => {

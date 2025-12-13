@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 import { describe, it, expect } from 'vitest';
 import {
   normalize,

@@ -106,7 +106,13 @@ export type {
   OAuthAuthorizationServerMetadata,
   OAuthProtectedResourceMetadata,
 } from './mcp/oauth-utils.js';
+
 export { OAuthUtils } from './mcp/oauth-utils.js';
+
+// MCP Code Generator
+export * from './mcp/codegen/types.js';
+export * from './mcp/codegen/McpToolDefinition.js';
+export * from './mcp/codegen/McpServerGenerator.js';
 
 // Export telemetry functions
 export * from './telemetry/index.js';

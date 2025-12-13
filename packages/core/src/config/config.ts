@@ -34,6 +34,7 @@ import { logCliConfiguration, logIdeConnection } from '../telemetry/loggers.js';
 import { IdeConnectionEvent, IdeConnectionType } from '../telemetry/types.js';
 import { BatchEditTool } from '../tools/batch-edit.js';
 import { EditTool } from '../tools/edit.js';
+import { DiagnosticsTool } from '../tools/diagnostics.js';
 import { ExitPlanModeTool } from '../tools/exitPlanMode.js';
 import { GlobTool } from '../tools/glob.js';
 import { GrepTool } from '../tools/grep.js';
@@ -471,7 +472,7 @@ export class Config {
     this.promptRegistry = new PromptRegistry();
     this.subagentManager = new SubagentManager(this);
     this.toolRegistry = await this.createToolRegistry();
-    
+
     // Initialize contentGeneratorConfig with default values if not already set
     if (!this.contentGeneratorConfig) {
       // Determine an appropriate authType if none is set
@@ -482,7 +483,7 @@ export class Config {
           ? AuthType.USE_OPENAI
           : AuthType.NO_AUTH;
       }
-      
+
       const tempConfig = createContentGeneratorConfig(this, effectiveAuthType);
       // If the config specifies a model, use that instead of the default
       if (this.model && tempConfig) {
@@ -494,7 +495,7 @@ export class Config {
         this.contentGeneratorConfig = tempConfig;
       }
     }
-    
+
     logCliConfiguration(this, new StartSessionEvent(this, this.toolRegistry));
   }
 
@@ -1035,8 +1036,8 @@ export class Config {
     const registry = new ToolRegistry(this);
 
     // helper to create & register core tools that are enabled
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const registerCoreTool = (ToolClass: any, ...args: unknown[]) => {
+
+    const registerCoreTool = (ToolClass: unknown, ...args: unknown[]) => {
       const className = ToolClass.name;
       const toolName = ToolClass.Name || className;
       const coreTools = this.getCoreTools();
@@ -1086,6 +1087,7 @@ export class Config {
     registerCoreTool(TodoWriteTool, this);
     registerCoreTool(ExitPlanModeTool, this);
     registerCoreTool(WebFetchTool, this);
+    registerCoreTool(DiagnosticsTool, this);
     // Conditionally register web search tool only if Tavily API key is set
     if (this.getTavilyApiKey()) {
       registerCoreTool(WebSearchTool, this);

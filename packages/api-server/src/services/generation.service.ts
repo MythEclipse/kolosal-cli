@@ -39,8 +39,8 @@ export class GenerationService {
     this.config.setApprovalMode(ApprovalMode.YOLO);
 
     // Store original workspace context if we need to temporarily change it
-    let originalWorkspaceContext: any = null;
-    let tempWorkspaceContext: any = null;
+    let originalWorkspaceContext: unknown = null;
+    let tempWorkspaceContext: unknown = null;
 
     if (workingDirectory) {
       try {
@@ -131,7 +131,7 @@ export class GenerationService {
     }
   }
 
-  private setupConversationHistory(geminiClient: any, conversationHistory?: Content[]): void {
+  private setupConversationHistory(geminiClient: unknown, conversationHistory?: Content[]): void {
     // Check if the client is properly initialized
     if (!geminiClient || !geminiClient.isInitialized()) {
       console.error('[API] Gemini client is not properly initialized');
@@ -184,7 +184,7 @@ export class GenerationService {
   }
 
   private async runGenerationLoop(
-    geminiClient: any,
+    geminiClient: unknown,
     processedQuery: Part[],
     promptId: string,
     signal: AbortSignal,
@@ -238,7 +238,7 @@ export class GenerationService {
   }
 
   private async processGenerationTurn(
-    geminiClient: any,
+    geminiClient: unknown,
     currentMessages: Content[],
     promptId: string,
     signal: AbortSignal,
@@ -335,7 +335,7 @@ export class GenerationService {
     }
   }
 
-  private createToolResultEvent(requestInfo: ToolCallRequestInfo, toolResponse: any): TranscriptItem {
+  private createToolResultEvent(requestInfo: ToolCallRequestInfo, toolResponse: unknown): TranscriptItem {
     if (toolResponse.error) {
       return {
         type: 'tool_result',
@@ -345,7 +345,7 @@ export class GenerationService {
       };
     } else {
       // Include full response details similar to non-streaming mode
-      const fullResponse: any = {
+      const fullResponse: unknown = {
         type: 'tool_result',
         name: requestInfo.name,
         ok: true,

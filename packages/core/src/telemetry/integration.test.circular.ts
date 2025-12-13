@@ -38,14 +38,14 @@ describe('Circular Reference Integration Test', () => {
     } as unknown as Config;
 
     // Simulate the structure that causes the circular reference error
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const proxyAgentLike: any = {
+     
+    const proxyAgentLike: unknown = {
       sockets: {},
       options: { proxy: 'http://proxy.example.com:8080' },
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const socketLike: any = {
+     
+    const socketLike: unknown = {
       _httpMessage: {
         agent: proxyAgentLike,
         socket: null,

@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -53,8 +54,8 @@ const mockEmbedContentFn = vi.fn();
 const mockTurnRunFn = vi.fn();
 
 let ApprovalModeEnum: typeof import('../config/config.js').ApprovalMode;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let mockConfigObject: any;
+ 
+let mockConfigObject: unknown;
 
 vi.mock('@google/genai');
 vi.mock('./contentGenerator.js', async (importOriginal) => {

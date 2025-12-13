@@ -1,3 +1,4 @@
+/* eslint-disable vitest/no-conditional-expect, vitest/no-disabled-tests */
 /**
  * @license
  * Copyright 2025 Google LLC
@@ -49,7 +50,7 @@ const mockSseTransportClose = vi.fn();
 vi.mock('@modelcontextprotocol/sdk/client/index.js', () => {
   const MockClient = vi.fn().mockImplementation(() => ({
     connect: mockMcpClientConnect,
-    set onerror(handler: any) {
+    set onerror(handler: unknown) {
       mockMcpClientOnError(handler);
     },
   }));

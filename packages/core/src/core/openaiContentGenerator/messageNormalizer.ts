@@ -17,12 +17,12 @@ function hasToolCalls(msg: Partial<Msg>): boolean {
 function isEmptyAssistant(msg: Msg): boolean {
   if (msg.role !== 'assistant') return false;
   if (hasToolCalls(msg)) return false;
-  const content: any = (msg as any).content;
+  const content: unknown = (msg as any).content;
   if (content == null) return true;
   if (typeof content === 'string') return content.trim().length === 0;
   if (Array.isArray(content)) {
     // Consider empty if no parts or all parts are empty text
-    return content.length === 0 || content.every((p: any) => {
+    return content.length === 0 || content.every((p: unknown) => {
       if (!p) return true;
       if (typeof p === 'string') return String(p).trim().length === 0;
       // Common content-part shapes have p.type and a text field
@@ -35,7 +35,7 @@ function isEmptyAssistant(msg: Msg): boolean {
   return false;
 }
 
-function mergeContent(a: any, b: any): any {
+function mergeContent(a: unknown, b: unknown): unknown {
   if (a == null) return b;
   if (b == null) return a;
 

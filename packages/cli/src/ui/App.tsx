@@ -209,7 +209,7 @@ function isToolExecuting(pendingHistoryItems: HistoryItemWithoutId[]) {
 
 export const AppWrapper = (props: AppProps) => {
   const kittyProtocolStatus = useKittyKeyboardProtocol();
-  const nodeMajorVersion = parseInt(process.versions.node.split('.')[0], 10);
+  const nodeMajorVersion = parseInt(process.versions.node.split('.', 10)[0], 10);
   return (
     <KeypressProvider
       kittyProtocolEnabled={kittyProtocolStatus.enabled}
