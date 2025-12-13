@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { exec, execSync, spawn, ChildProcess } from 'node:child_process';
+import { exec, execSync, spawn, type ChildProcess } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -325,7 +325,7 @@ export async function start_sandbox(
         proxyProcess.stderr?.on('data', (data) => {
           console.error(data.toString());
         });
-        (proxyProcess as any).on(
+        (proxyProcess as unknown as NodeJS.EventEmitter).on(
           'close',
           (code: number | null, signal: string | null) => {
             if (sandboxProcess?.pid) {
@@ -346,7 +346,10 @@ export async function start_sandbox(
         stdio: 'inherit',
       });
       await new Promise((resolve) =>
-        (sandboxProcess as any)?.on('close', resolve),
+        (sandboxProcess as unknown as NodeJS.EventEmitter)?.on(
+          'close',
+          resolve,
+        ),
       );
       return;
     }
@@ -773,7 +776,7 @@ export async function start_sandbox(
       proxyProcess.stderr?.on('data', (data) => {
         console.error(data.toString().trim());
       });
-      (proxyProcess as any).on(
+      (proxyProcess as unknown as NodeJS.EventEmitter).on(
         'close',
         (code: number | null, signal: string | null) => {
           if (sandboxProcess?.pid) {
@@ -800,12 +803,15 @@ export async function start_sandbox(
       stdio: 'inherit',
     });
 
-    (sandboxProcess as any).on('error', (err: Error) => {
-      console.error('Sandbox process error:', err);
-    });
+    (sandboxProcess as unknown as NodeJS.EventEmitter).on(
+      'error',
+      (err: Error) => {
+        console.error('Sandbox process error:', err);
+      },
+    );
 
     await new Promise<void>((resolve) => {
-      (sandboxProcess as any)?.on(
+      (sandboxProcess as unknown as NodeJS.EventEmitter)?.on(
         'close',
         (code: number | null, signal: string | null) => {
           if (code !== 0) {
@@ -835,21 +841,27 @@ async function imageExists(sandbox: string, image: string): Promise<boolean> {
       });
     }
 
-    (checkProcess as any).on('error', (err: any) => {
-      console.warn(
-        `Failed to start '${sandbox}' command for image check: ${err.message}`,
-      );
-      resolve(false);
-    });
+    (checkProcess as unknown as NodeJS.EventEmitter).on(
+      'error',
+      (err: Error) => {
+        console.warn(
+          `Failed to start '${sandbox}' command for image check: ${err.message}`,
+        );
+        resolve(false);
+      },
+    );
 
-    (checkProcess as any).on('close', (code: any) => {
-      // Non-zero code might indicate docker daemon not running, etc.
-      // The primary success indicator is non-empty stdoutData.
-      if (code !== 0) {
-        // console.warn(`'${sandbox} images -q ${image}' exited with code ${code}.`);
-      }
-      resolve(stdoutData.trim() !== '');
-    });
+    (checkProcess as unknown as NodeJS.EventEmitter).on(
+      'close',
+      (code: number | null) => {
+        // Non-zero code might indicate docker daemon not running, etc.
+        // The primary success indicator is non-empty stdoutData.
+        if (code !== 0) {
+          // console.warn(`'${sandbox} images -q ${image}' exited with code ${code}.`);
+        }
+        resolve(stdoutData.trim() !== '');
+      },
+    );
   });
 }
 
@@ -902,8 +914,14 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
       if (pullProcess.stderr) {
         pullProcess.stderr.removeListener('data', onStderrData);
       }
-      (pullProcess as any).removeListener('error', onError);
-      (pullProcess as any).removeListener('close', onClose);
+      (pullProcess as unknown as NodeJS.EventEmitter).removeListener(
+        'error',
+        onError,
+      );
+      (pullProcess as unknown as NodeJS.EventEmitter).removeListener(
+        'close',
+        onClose,
+      );
       if (pullProcess.connected) {
         pullProcess.disconnect();
       }
@@ -915,8 +933,8 @@ async function pullImage(sandbox: string, image: string): Promise<boolean> {
     if (pullProcess.stderr) {
       pullProcess.stderr.on('data', onStderrData);
     }
-    (pullProcess as any).on('error', onError);
-    (pullProcess as any).on('close', onClose);
+    (pullProcess as unknown as NodeJS.EventEmitter).on('error', onError);
+    (pullProcess as unknown as NodeJS.EventEmitter).on('close', onClose);
   });
 }
 
