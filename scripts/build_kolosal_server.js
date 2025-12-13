@@ -565,6 +565,13 @@ async function main() {
     // Build kolosal-server
     const buildOutputDir = await buildKolosalServer();
 
+    // If build was skipped (source not available), exit gracefully
+    if (buildOutputDir === null) {
+      console.log('\n✅ kolosal-server build skipped (source not available)');
+      console.log('   This is normal if you are only using the CLI interface.');
+      return;
+    }
+
     // Copy to distribution
     const { binDir, libDir, resourcesDir } =
       await copyToDistribution(buildOutputDir);
@@ -578,8 +585,8 @@ async function main() {
       try {
         await execAsync('node scripts/bundle_shared_libs.js', { cwd: rootDir });
         console.log('✅ Dependency analysis complete');
-      } catch (error) {
-        console.warn(`⚠️  Dependency analysis failed: ${error.message}`);
+      } catch (_error) {
+        console.warn(`⚠️  Dependency analysis failed: ${_error.message}`);
       }
     }
 
@@ -609,8 +616,8 @@ async function main() {
     }
 
     console.log(`   • Ready for packaging and distribution`);
-  } catch (error) {
-    console.error('\n💥 Build failed:', error.message);
+  } catch (_error) {
+    console.error('\n💥 Build failed:', _error.message);
     process.exit(1);
   }
 }
