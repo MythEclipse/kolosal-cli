@@ -13,7 +13,6 @@ import {
 } from '@kolosal-ai/kolosal-ai-core';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
-import { ContextUsageDisplay } from './ContextUsageDisplay.js';
 
 interface ContextSummaryDisplayProps {
   geminiMdFileCount: number;
@@ -33,8 +32,8 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
   blockedMcpServers,
   showToolDescriptions,
   ideContext,
-  promptTokenCount,
-  model,
+  promptTokenCount: _promptTokenCount,
+  model: _model,
 }) => {
   const { columns: terminalWidth } = useTerminalSize();
   const isNarrow = isNarrowWidth(terminalWidth);
@@ -46,8 +45,7 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     geminiMdFileCount === 0 &&
     mcpServerCount === 0 &&
     blockedMcpServerCount === 0 &&
-    openFileCount === 0 &&
-    (promptTokenCount === undefined || !model)
+    openFileCount === 0
   ) {
     return <Text> </Text>; // Render an empty space to reserve height
   }
@@ -103,6 +101,10 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
 
   const summaryParts = [openFilesText, geminiMdText, mcpText].filter(Boolean);
 
+  if (summaryParts.length === 0) {
+    return <Text> </Text>; // No summary parts to display
+  }
+
   if (isNarrow) {
     return (
       <Box flexDirection="column">
@@ -112,14 +114,6 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
             {'  '}- {part}
           </Text>
         ))}
-        {promptTokenCount !== undefined && model && (
-          <Box marginLeft={2} marginTop={1}>
-            <ContextUsageDisplay
-              promptTokenCount={promptTokenCount}
-              model={model}
-            />
-          </Box>
-        )}
       </Box>
     );
   }
@@ -128,18 +122,7 @@ export const ContextSummaryDisplay: React.FC<ContextSummaryDisplayProps> = ({
     <Box flexDirection="column">
       <Box>
         <Text color={Colors.Gray}>Using: {summaryParts.join(' | ')}</Text>
-        {promptTokenCount !== undefined && model && summaryParts.length > 0 && (
-          <Text color={Colors.Gray}> | </Text>
-        )}
       </Box>
-      {promptTokenCount !== undefined && model && (
-        <Box marginLeft={2}>
-          <ContextUsageDisplay
-            promptTokenCount={promptTokenCount}
-            model={model}
-          />
-        </Box>
-      )}
     </Box>
   );
 };

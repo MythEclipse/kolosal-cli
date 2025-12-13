@@ -7,7 +7,7 @@
 import type React from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../semantic-colors.js';
-import { shortenPath, tildeifyPath } from '@kolosal-ai/kolosal-ai-core';
+import { shortenPath, tildeifyPath, tokenLimit } from '@kolosal-ai/kolosal-ai-core';
 import { ConsoleSummaryDisplay } from './ConsoleSummaryDisplay.js';
 import process from 'node:process';
 import path from 'node:path';
@@ -32,6 +32,21 @@ interface FooterProps {
   nightly: boolean;
   vimMode?: string;
   isTrustedFolder?: boolean;
+}
+
+/**
+ * Format token limit to human-readable format (e.g., 131072 → 131k, 1048576 → 1M)
+ */
+function formatTokenLimit(limit: number): string {
+  if (limit >= 1000000) {
+    const millions = limit / 1000000;
+    return millions % 1 === 0 ? `${millions}M` : `${millions.toFixed(1)}M`;
+  }
+  if (limit >= 1000) {
+    const thousands = limit / 1000;
+    return thousands % 1 === 0 ? `${thousands}k` : `${thousands.toFixed(0)}k`;
+  }
+  return limit.toString();
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -125,9 +140,9 @@ export const Footer: React.FC<FooterProps> = ({
         <Text color={theme.text.accent}>
           {isNarrow ? '' : ' '}
           {model}
-          {promptTokenCount > 0 && (
+          {promptTokenCount !== undefined && (
             <Text color={theme.text.secondary}>
-              {' '}({promptTokenCount.toLocaleString()})
+              {' '}({promptTokenCount.toLocaleString()}/{formatTokenLimit(tokenLimit(model))})
             </Text>
           )}
         </Text>
