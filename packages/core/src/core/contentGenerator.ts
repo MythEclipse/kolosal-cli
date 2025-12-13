@@ -72,8 +72,6 @@ export function createContentGeneratorConfig(
   config: Config,
   authType: AuthType | undefined,
 ): ContentGeneratorConfig {
-
-
   // openai auth
   const openaiApiKey = process.env['OPENAI_API_KEY'] || undefined;
   const openaiBaseUrl = process.env['OPENAI_BASE_URL'] || undefined;
@@ -118,8 +116,10 @@ export function createContentGeneratorConfig(
 export async function createContentGenerator(
   config: ContentGeneratorConfig,
   gcConfig: Config,
-  sessionId?: string,
+  _sessionId?: string,
 ): Promise<ContentGenerator> {
+  let generator: ContentGenerator;
+
   if (config.authType === AuthType.USE_OPENAI) {
     if (!config.apiKey) {
       throw new Error('OpenAI API key is required');
@@ -131,20 +131,30 @@ export async function createContentGenerator(
     );
 
     // Always use OpenAIContentGenerator, logging is controlled by enableOpenAILogging flag
-    return createOpenAIContentGenerator(config, gcConfig);
-  }
-
-  if (config.authType === AuthType.NO_AUTH) {
+    generator = await createOpenAIContentGenerator(config, gcConfig);
+  } else if (config.authType === AuthType.NO_AUTH) {
     // For local models that don't require authentication, use OpenAI-compatible interface
     // but without API key requirement
     const { createOpenAIContentGenerator } = await import(
       './openaiContentGenerator/index.js'
     );
 
-    return createOpenAIContentGenerator(config, gcConfig);
+    generator = await createOpenAIContentGenerator(config, gcConfig);
+  } else {
+    throw new Error(
+      `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
+    );
   }
 
-  throw new Error(
-    `Error creating contentGenerator: Unsupported authType: ${config.authType}`,
+  // Wrap with caching layer (Phase 1 optimization)
+  const { withCaching } = await import('./cachingContentGenerator.js');
+  generator = withCaching(generator, gcConfig);
+
+  // Wrap with logging layer (existing functionality)
+  const { LoggingContentGenerator } = await import(
+    './loggingContentGenerator.js'
   );
+  generator = new LoggingContentGenerator(generator, gcConfig);
+
+  return generator;
 }

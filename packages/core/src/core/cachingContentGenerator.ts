@@ -14,6 +14,10 @@ import type {
 } from '@google/genai';
 import type { ContentGenerator } from './contentGenerator.js';
 import { ResponseCache, getGlobalCache } from './cache.js';
+import {
+  RequestDeduplicator,
+  getGlobalDeduplicator,
+} from './requestDeduplicator.js';
 import type { Config } from '../config/config.js';
 
 /**
@@ -22,6 +26,7 @@ import type { Config } from '../config/config.js';
  */
 export class CachingContentGenerator implements ContentGenerator {
   private cache: ResponseCache<GenerateContentResponse>;
+  private deduplicator: RequestDeduplicator;
 
   constructor(
     private readonly wrapped: ContentGenerator,
@@ -30,6 +35,7 @@ export class CachingContentGenerator implements ContentGenerator {
       ttl?: number;
       maxSize?: number;
       enabled?: boolean;
+      enableDeduplication?: boolean;
     },
   ) {
     // Use global cache or create a new one with custom options
@@ -39,6 +45,12 @@ export class CachingContentGenerator implements ContentGenerator {
       // Get global cache and cast to correct type
       this.cache = getGlobalCache() as ResponseCache<GenerateContentResponse>;
     }
+
+    // Initialize request deduplicator
+    const dedupEnabled = cacheOptions?.enableDeduplication !== false;
+    this.deduplicator = dedupEnabled
+      ? getGlobalDeduplicator()
+      : new RequestDeduplicator();
 
     // Setup periodic cleanup
     if (cacheOptions?.enabled !== false) {
@@ -93,7 +105,7 @@ export class CachingContentGenerator implements ContentGenerator {
   ): Promise<GenerateContentResponse> {
     const cacheKey = this.getCacheKey(req);
 
-    // Try to get from cache
+    // Try to get from cache first
     const cached = this.cache.get(cacheKey);
     if (cached) {
       // Cache hit - return cached response
@@ -103,12 +115,19 @@ export class CachingContentGenerator implements ContentGenerator {
       return cached;
     }
 
-    // Cache miss - make actual API call
-    if (this.config.getDebugMode()) {
+    // Cache miss - check if identical request is in-flight
+    if (this.deduplicator.isInFlight(req)) {
+      if (this.config.getDebugMode()) {
+        console.error('[Dedup] Coalescing in-flight request for:', req.model);
+      }
+    } else if (this.config.getDebugMode()) {
       console.error('[Cache] Miss for request:', req.model);
     }
 
-    const response = await this.wrapped.generateContent(req, userPromptId);
+    // Use deduplicator to prevent duplicate in-flight requests
+    const response = await this.deduplicator.deduplicate(req, () =>
+      this.wrapped.generateContent(req, userPromptId),
+    );
 
     // Only cache successful responses (not errors)
     if (response.candidates && response.candidates.length > 0) {
