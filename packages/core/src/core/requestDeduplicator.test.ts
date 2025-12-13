@@ -193,12 +193,11 @@ describe('RequestDeduplicator', () => {
 
       expect(deduplicator.getInFlightCount()).toBe(0);
 
-      const resolvers: ((value: unknown) => void)[] = [];
-      const makeExecutor = () => {
-        return new Promise((resolve) => {
+      const resolvers: Array<(value: unknown) => void> = [];
+      const makeExecutor = () =>
+        new Promise((resolve) => {
           resolvers.push(resolve);
         });
-      };
 
       const promise1 = deduplicator.deduplicate(request1, makeExecutor);
       expect(deduplicator.getInFlightCount()).toBe(1);

@@ -18,6 +18,8 @@ import {
   RequestDeduplicator,
   getGlobalDeduplicator,
 } from './requestDeduplicator.js';
+import { getGlobalMetrics } from './performanceMetrics.js';
+import type { PerformanceMetrics } from './performanceMetrics.js';
 import type { Config } from '../config/config.js';
 
 /**
@@ -27,6 +29,7 @@ import type { Config } from '../config/config.js';
 export class CachingContentGenerator implements ContentGenerator {
   private cache: ResponseCache<GenerateContentResponse>;
   private deduplicator: RequestDeduplicator;
+  private metrics: PerformanceMetrics;
 
   constructor(
     private readonly wrapped: ContentGenerator,
@@ -51,6 +54,9 @@ export class CachingContentGenerator implements ContentGenerator {
     this.deduplicator = dedupEnabled
       ? getGlobalDeduplicator()
       : new RequestDeduplicator();
+
+    // Initialize performance metrics
+    this.metrics = getGlobalMetrics();
 
     // Setup periodic cleanup
     if (cacheOptions?.enabled !== false) {
@@ -103,20 +109,34 @@ export class CachingContentGenerator implements ContentGenerator {
     req: GenerateContentParameters,
     userPromptId: string,
   ): Promise<GenerateContentResponse> {
+    const startTime = Date.now();
     const cacheKey = this.getCacheKey(req);
+    let deduped = false;
 
     // Try to get from cache first
-    const cached = this.cache.get(cacheKey);
-    if (cached) {
+    const cachedResponse = this.cache.get(cacheKey);
+    if (cachedResponse) {
       // Cache hit - return cached response
       if (this.config.getDebugMode()) {
         console.error('[Cache] Hit for request:', req.model);
       }
-      return cached;
+
+      // Record cache hit metric
+      this.metrics.record({
+        model: req.model,
+        requestType: 'generate',
+        cached: true,
+        deduped: false,
+        responseTime: Date.now() - startTime,
+        tokenCount: cachedResponse.usageMetadata?.totalTokenCount,
+      });
+
+      return cachedResponse;
     }
 
     // Cache miss - check if identical request is in-flight
     if (this.deduplicator.isInFlight(req)) {
+      deduped = true;
       if (this.config.getDebugMode()) {
         console.error('[Dedup] Coalescing in-flight request for:', req.model);
       }
@@ -128,6 +148,16 @@ export class CachingContentGenerator implements ContentGenerator {
     const response = await this.deduplicator.deduplicate(req, () =>
       this.wrapped.generateContent(req, userPromptId),
     );
+
+    // Record metrics
+    this.metrics.record({
+      model: req.model,
+      requestType: 'generate',
+      cached: false,
+      deduped,
+      responseTime: Date.now() - startTime,
+      tokenCount: response.usageMetadata?.totalTokenCount,
+    });
 
     // Only cache successful responses (not errors)
     if (response.candidates && response.candidates.length > 0) {
