@@ -195,7 +195,7 @@ describe('<LoadingIndicator />', () => {
     expect(output).toContain('Loading...');
   });
 
-  it('should display the subject of a thought', () => {
+  it('should display the subject and description of a thought', () => {
     const props = {
       thought: {
         subject: 'Thinking about something...',
@@ -211,7 +211,7 @@ describe('<LoadingIndicator />', () => {
     expect(output).toBeDefined();
     if (output) {
       expect(output).toContain('Thinking about something...');
-      expect(output).not.toContain('and other stuff.');
+      expect(output).toContain('and other stuff.');
     }
   });
 

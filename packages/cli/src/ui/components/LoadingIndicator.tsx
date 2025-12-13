@@ -71,6 +71,12 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         {!isNarrow && <Box flexGrow={1}>{/* Spacer */}</Box>}
         {!isNarrow && rightContent && <Box>{rightContent}</Box>}
       </Box>
+      {/* Thought description line */}
+      {thought?.description && (
+        <Box marginLeft={2}>
+          <Text color={Colors.Gray} wrap="truncate">{thought.description}</Text>
+        </Box>
+      )}
       {isNarrow && cancelAndTimerContent && (
         <Box>
           <Text color={Colors.Gray}>{cancelAndTimerContent}</Text>
